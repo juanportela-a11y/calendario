@@ -1,0 +1,6 @@
+{
+  "name": "PurifiCalendario",
+  "description": "Plataforma de eventos, avisos comunitarios y agenda digital del municipio de Purificación, Tolima",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
