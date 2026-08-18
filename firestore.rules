@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Permitir lectura y escritura a las colecciones de la plataforma municipal
+    match /vias/{viaId} {
+      allow read, write: if true;
+    }
+    match /cortes/{corteId} {
+      allow read, write: if true;
+    }
+    match /jornadas_salud/{jornadaId} {
+      allow read, write: if true;
+    }
+    match /audit_logs/{logId} {
+      allow read, write: if true;
+    }
+    match /eventos/{eventoId} {
+      allow read, write: if true;
+    }
+    match /avisos/{avisoId} {
+      allow read, write: if true;
+    }
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
