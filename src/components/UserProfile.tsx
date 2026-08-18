@@ -87,14 +87,14 @@ export const UserProfile: React.FC<UserProfileProps> = ({
       </div>
 
       {/* Event Category Preferences Section */}
-      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+      <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
           <div>
-            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+            <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-[#2196F3]" />
               Mis Preferencias de Eventos
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Selecciona los temas de tu interés para recibir notificaciones y filtrarlos en tu calendario.
             </p>
           </div>
@@ -126,8 +126,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                 onClick={() => toggleCategory(cat.codigo)}
                 className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between gap-3 ${
                   isChecked
-                    ? 'border-[#2196F3] bg-blue-50/60 shadow-xs'
-                    : 'border-slate-100 hover:border-slate-300 bg-slate-50'
+                    ? 'border-[#2196F3] bg-blue-50/60 dark:bg-blue-950/40 shadow-xs'
+                    : 'border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50 dark:bg-slate-800/60'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -136,13 +136,13 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                     style={{ backgroundColor: cat.color }}
                   />
                   <div>
-                    <p className="text-xs font-bold text-slate-900">{cat.nombre}</p>
-                    <p className="text-[10px] text-slate-500 line-clamp-1">{cat.descripcion}</p>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">{cat.nombre}</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1">{cat.descripcion}</p>
                   </div>
                 </div>
 
                 <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
-                  isChecked ? 'bg-[#2196F3] border-[#2196F3] text-white' : 'border-slate-300 bg-white'
+                  isChecked ? 'bg-[#2196F3] border-[#2196F3] text-white' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700'
                 }`}>
                   {isChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                 </div>
@@ -156,21 +156,21 @@ export const UserProfile: React.FC<UserProfileProps> = ({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+            <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
               <Bookmark className="w-5 h-5 text-amber-500" />
               Mis Eventos Guardados ({savedEvents.length})
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Eventos que has marcado como tus favoritos para asistir en Purificación.
             </p>
           </div>
         </div>
 
         {savedEvents.length === 0 ? (
-          <div className="p-10 text-center bg-white rounded-3xl border border-slate-200">
-            <Bookmark className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-            <p className="text-sm font-bold text-slate-700">Aún no has guardado eventos</p>
-            <p className="text-xs text-slate-500 mt-1">
+          <div className="p-10 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
+            <Bookmark className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+            <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Aún no has guardado eventos</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Explora el calendario y haz clic en "Guardar" en los eventos de tu interés.
             </p>
           </div>

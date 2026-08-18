@@ -135,18 +135,18 @@ export const OrganizerPanel: React.FC<OrganizerPanelProps> = ({
 
       {/* Form Container */}
       {showForm && (
-        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-md space-y-6 animate-fade-in">
-          <div className="border-b border-slate-100 pb-4">
-            <h3 className="text-lg font-extrabold text-slate-900">
+        <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md space-y-6 animate-fade-in">
+          <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
+            <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">
               {editingEventId ? 'Editar Información del Evento' : 'Registrar Nuevo Evento en Purificación'}
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Proporciona los datos requeridos. Los habitantes interesados recibirán notificaciones automáticamente.
             </p>
           </div>
 
           {errorMsg && (
-            <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-xs flex items-center gap-2">
+            <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
               <span>{errorMsg}</span>
             </div>
@@ -157,7 +157,7 @@ export const OrganizerPanel: React.FC<OrganizerPanelProps> = ({
               
               {/* Event Name */}
               <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                   Nombre del Evento *
                 </label>
                 <input
@@ -166,19 +166,19 @@ export const OrganizerPanel: React.FC<OrganizerPanelProps> = ({
                   value={formData.nombre}
                   onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                   placeholder="Ej. Encuentro Municipal de Danza Folclórica"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:border-emerald-500 focus:outline-none"
                 />
               </div>
 
               {/* Category */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                   Categoría del Evento *
                 </label>
                 <select
                   value={formData.id_categoria}
                   onChange={(e) => setFormData({ ...formData, id_categoria: Number(e.target.value) })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:border-emerald-500 focus:outline-none bg-white"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:border-emerald-500 focus:outline-none"
                 >
                   {categories.map((cat) => (
                     <option key={cat.id_categoria} value={cat.id_categoria}>
@@ -190,7 +190,7 @@ export const OrganizerPanel: React.FC<OrganizerPanelProps> = ({
 
               {/* Date */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                   Fecha del Evento *
                 </label>
                 <input
@@ -198,13 +198,13 @@ export const OrganizerPanel: React.FC<OrganizerPanelProps> = ({
                   required
                   value={formData.fecha}
                   onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:border-emerald-500 focus:outline-none bg-white"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:border-emerald-500 focus:outline-none"
                 />
               </div>
 
               {/* Start Time */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                   Hora de Inicio *
                 </label>
                 <input
@@ -213,13 +213,13 @@ export const OrganizerPanel: React.FC<OrganizerPanelProps> = ({
                   value={formData.hora_inicio}
                   onChange={(e) => setFormData({ ...formData, hora_inicio: e.target.value })}
                   placeholder="08:00 AM"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:border-emerald-500 focus:outline-none"
                 />
               </div>
 
               {/* End Time */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                   Hora de Finalización (Opcional)
                 </label>
                 <input
@@ -227,13 +227,13 @@ export const OrganizerPanel: React.FC<OrganizerPanelProps> = ({
                   value={formData.hora_fin || ''}
                   onChange={(e) => setFormData({ ...formData, hora_fin: e.target.value })}
                   placeholder="12:00 PM"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:border-emerald-500 focus:outline-none"
                 />
               </div>
 
               {/* Location */}
               <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                   Lugar o Dirección en Purificación *
                 </label>
                 <input
@@ -242,13 +242,13 @@ export const OrganizerPanel: React.FC<OrganizerPanelProps> = ({
                   value={formData.lugar}
                   onChange={(e) => setFormData({ ...formData, lugar: e.target.value })}
                   placeholder="Ej. Parque Principal Villa de las Palmas / Malecón"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:border-emerald-500 focus:outline-none"
                 />
               </div>
 
               {/* Description */}
               <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                   Descripción Detallada *
                 </label>
                 <textarea
@@ -257,13 +257,13 @@ export const OrganizerPanel: React.FC<OrganizerPanelProps> = ({
                   value={formData.descripcion}
                   onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
                   placeholder="Describe la programación, actividades y objetivo del evento..."
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:border-emerald-500 focus:outline-none"
                 />
               </div>
 
               {/* Additional Info */}
               <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                   Información Adicional (Recomendaciones, vestimenta, cupos)
                 </label>
                 <input
@@ -271,16 +271,16 @@ export const OrganizerPanel: React.FC<OrganizerPanelProps> = ({
                   value={formData.info_adicional || ''}
                   onChange={(e) => setFormData({ ...formData, info_adicional: e.target.value })}
                   placeholder="Ej. Entrada libre. Llevar hidratación y ropa cómoda."
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:border-emerald-500 focus:outline-none"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
               <button
                 type="button"
                 onClick={resetForm}
-                className="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200"
+                className="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-750"
               >
                 Cancelar
               </button>
@@ -299,22 +299,22 @@ export const OrganizerPanel: React.FC<OrganizerPanelProps> = ({
 
       {/* List of Registered Events */}
       <div className="space-y-4">
-        <h3 className="text-lg font-black text-slate-900">
+        <h3 className="text-lg font-black text-slate-900 dark:text-white">
           Mis Eventos Registrados ({myEvents.length})
         </h3>
 
         {myEvents.length === 0 ? (
-          <div className="p-10 text-center bg-white rounded-3xl border border-slate-200">
-            <Building2 className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-            <p className="text-sm font-bold text-slate-700">Aún no has registrado ningún evento</p>
-            <p className="text-xs text-slate-500 mt-1">Haz clic en "Registrar Nuevo Evento" para comenzar.</p>
+          <div className="p-10 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
+            <Building2 className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+            <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Aún no has registrado ningún evento</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Haz clic en "Registrar Nuevo Evento" para comenzar.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3">
             {myEvents.map((evt) => (
               <div
                 key={evt.id_evento}
-                className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -324,14 +324,14 @@ export const OrganizerPanel: React.FC<OrganizerPanelProps> = ({
                     >
                       {evt.categoria?.nombre}
                     </span>
-                    <span className="text-xs text-slate-500 font-semibold">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">
                       {evt.fecha} &bull; {evt.hora_inicio}
                     </span>
                   </div>
-                  <h4 className="text-base font-extrabold text-slate-900">
+                  <h4 className="text-base font-extrabold text-slate-900 dark:text-white">
                     {evt.nombre}
                   </h4>
-                  <p className="text-xs text-slate-600 flex items-center gap-1">
+                  <p className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1">
                     <MapPin className="w-3.5 h-3.5 text-red-500" />
                     <span>{evt.lugar}</span>
                   </p>
@@ -340,7 +340,7 @@ export const OrganizerPanel: React.FC<OrganizerPanelProps> = ({
                 <div className="flex items-center gap-2 self-end sm:self-center">
                   <button
                     onClick={() => handleEditClick(evt)}
-                    className="px-3 py-1.5 rounded-xl bg-blue-50 text-[#0D47A1] hover:bg-blue-100 text-xs font-bold flex items-center gap-1"
+                    className="px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#0D47A1] dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-xs font-bold flex items-center gap-1 border border-blue-200 dark:border-blue-800"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                     <span>Actualizar</span>
@@ -348,7 +348,7 @@ export const OrganizerPanel: React.FC<OrganizerPanelProps> = ({
 
                   <button
                     onClick={() => onDeleteEvent(evt.id_evento)}
-                    className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50"
+                    className="p-2 rounded-xl text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50"
                     title="Eliminar evento"
                   >
                     <Trash2 className="w-4 h-4" />

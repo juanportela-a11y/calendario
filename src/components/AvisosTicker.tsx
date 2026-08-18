@@ -18,18 +18,18 @@ export const AvisosTicker: React.FC<AvisosTickerProps> = ({ notices, onViewAll }
   const getNoticeIcon = (tipo: string) => {
     switch (tipo) {
       case 'corte_agua':
-        return <Droplet className="w-4 h-4 text-cyan-700" />;
+        return <Droplet className="w-4 h-4 text-cyan-700 dark:text-cyan-400" />;
       case 'corte_luz':
-        return <Zap className="w-4 h-4 text-amber-700" />;
+        return <Zap className="w-4 h-4 text-amber-700 dark:text-amber-400" />;
       default:
-        return <AlertTriangle className="w-4 h-4 text-red-700" />;
+        return <AlertTriangle className="w-4 h-4 text-red-700 dark:text-red-400" />;
     }
   };
 
   return (
-    <div className="bg-amber-50 border-l-4 border-amber-500 rounded-2xl p-4 shadow-sm mb-8 flex items-center justify-between gap-4">
+    <div className="bg-amber-50 dark:bg-amber-950/40 border-l-4 border-amber-500 rounded-2xl p-4 shadow-sm mb-8 flex items-center justify-between gap-4 border-y border-r border-amber-200 dark:border-amber-900/60">
       <div className="flex items-start sm:items-center gap-3">
-        <div className="p-2 bg-amber-100 rounded-xl flex-shrink-0">
+        <div className="p-2 bg-amber-100 dark:bg-amber-900/60 rounded-xl flex-shrink-0">
           {getNoticeIcon(currentNotice.tipo)}
         </div>
         <div>
@@ -37,14 +37,14 @@ export const AvisosTicker: React.FC<AvisosTickerProps> = ({ notices, onViewAll }
             <span className="bg-amber-600 text-white font-extrabold text-[10px] px-2 py-0.5 rounded-md uppercase tracking-wider">
               AVISO URGENTE
             </span>
-            <span className="text-xs text-amber-900 font-semibold">
+            <span className="text-xs text-amber-900 dark:text-amber-200 font-semibold">
               Sector: {currentNotice.sector_afectado}
             </span>
           </div>
-          <h4 className="text-sm font-bold text-slate-900 mt-0.5">
+          <h4 className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">
             {currentNotice.titulo}
           </h4>
-          <p className="text-xs text-slate-600 line-clamp-1 mt-0.5">
+          <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-1 mt-0.5">
             {currentNotice.descripcion}
           </p>
         </div>
@@ -61,7 +61,7 @@ export const AvisosTicker: React.FC<AvisosTickerProps> = ({ notices, onViewAll }
 
         <button
           onClick={() => setClosed(true)}
-          className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-amber-100"
+          className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/50"
           title="Cerrar aviso"
         >
           <X className="w-4 h-4" />

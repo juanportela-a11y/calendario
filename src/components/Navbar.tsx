@@ -10,7 +10,9 @@ import {
   MapPin,
   Sparkles,
   Menu,
-  X
+  X,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { UserRole, Usuario } from '../types';
 
@@ -23,6 +25,8 @@ interface NavbarProps {
   onOpenAuth: () => void;
   onOpenDdl: () => void;
   allUsers: Usuario[];
+  darkMode: boolean;
+  onToggleDarkMode: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -33,18 +37,20 @@ export const Navbar: React.FC<NavbarProps> = ({
   unreadCount,
   onOpenAuth,
   onOpenDdl,
-  allUsers
+  allUsers,
+  darkMode,
+  onToggleDarkMode
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   const getRoleBadge = (rol: UserRole) => {
     switch (rol) {
       case 'administrador':
-        return <span className="bg-amber-100 text-amber-800 text-xs font-semibold px-2 py-0.5 rounded border border-amber-300">Admin</span>;
+        return <span className="bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 text-xs font-semibold px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700/60">Admin</span>;
       case 'organizador':
-        return <span className="bg-emerald-100 text-emerald-800 text-xs font-semibold px-2 py-0.5 rounded border border-emerald-300">Organizador</span>;
+        return <span className="bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 text-xs font-semibold px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-700/60">Organizador</span>;
       default:
-        return <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded border border-blue-300">Habitante</span>;
+        return <span className="bg-blue-100 dark:bg-blue-950/70 text-blue-800 dark:text-blue-300 text-xs font-semibold px-2 py-0.5 rounded border border-blue-300 dark:border-blue-700/60">Habitante</span>;
     }
   };
 
@@ -58,26 +64,46 @@ export const Navbar: React.FC<NavbarProps> = ({
   ];
 
   return (
-    <header className="sticky top-0 z-40 bg-white shadow-sm border-b border-blue-100">
+    <header className="sticky top-0 z-40 bg-white dark:bg-slate-900/95 shadow-sm border-b border-blue-100 dark:border-slate-800 transition-colors backdrop-blur-md">
       {/* Top Municipal Identity Bar */}
-      <div className="bg-[#0D47A1] text-white py-1.5 px-4 text-xs font-medium flex items-center justify-between">
+      <div className="bg-[#0D47A1] dark:bg-slate-950 text-white py-1.5 px-4 text-xs font-medium flex items-center justify-between border-b border-blue-900 dark:border-slate-800">
         <div className="flex items-center gap-2">
           <MapPin className="w-3.5 h-3.5 text-[#64B5F6]" />
           <span>Purificación, Tolima &bull; La Villa de las Palmas</span>
         </div>
         <div className="flex items-center gap-3">
+          {/* Dark Mode Fast Toggle */}
+          <button
+            onClick={onToggleDarkMode}
+            className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-950/70 dark:bg-slate-800 hover:bg-blue-900 text-blue-100 hover:text-white transition-all text-[11px] border border-blue-400/30 dark:border-slate-700"
+            title={darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+          >
+            {darkMode ? (
+              <>
+                <Sun className="w-3.5 h-3.5 text-amber-300" />
+                <span className="hidden sm:inline">Modo Claro</span>
+              </>
+            ) : (
+              <>
+                <Moon className="w-3.5 h-3.5 text-blue-200" />
+                <span className="hidden sm:inline">Modo Oscuro</span>
+              </>
+            )}
+          </button>
+
           <button 
             onClick={onOpenDdl}
-            className="flex items-center gap-1 text-blue-100 hover:text-white transition-colors bg-blue-950/60 px-2 py-0.5 rounded text-[11px]"
+            className="flex items-center gap-1 text-blue-100 hover:text-white transition-colors bg-blue-950/60 dark:bg-slate-800 px-2 py-0.5 rounded text-[11px]"
             title="Ver Arquitectura Hexagonal y Esquema MySQL"
           >
             <Database className="w-3 h-3 text-[#64B5F6]" />
-            <span>Base de Datos (MySQL)</span>
+            <span className="hidden sm:inline">Base de Datos</span>
+            <span className="sm:hidden">BD</span>
           </button>
           
           {/* Quick Role Switcher for instant testing */}
-          <div className="hidden md:flex items-center gap-1 bg-blue-900/80 px-2 py-0.5 rounded text-[11px]">
-            <span className="text-blue-200">Probar como:</span>
+          <div className="hidden md:flex items-center gap-1 bg-blue-900/80 dark:bg-slate-800/80 px-2 py-0.5 rounded text-[11px]">
+            <span className="text-blue-200">Rol:</span>
             {allUsers.map(u => (
               <button
                 key={u.id_usuario}
@@ -85,7 +111,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className={`px-1.5 py-0.5 rounded text-[10px] capitalize transition-all ${
                   currentUser.id_usuario === u.id_usuario
                     ? 'bg-[#2196F3] text-white font-bold shadow'
-                    : 'text-blue-100 hover:bg-blue-800'
+                    : 'text-blue-100 hover:bg-blue-800 dark:hover:bg-slate-700'
                 }`}
               >
                 {u.rol}
@@ -101,15 +127,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           
           {/* Brand Logo */}
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('inicio')}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#0D47A1] to-[#2196F3] flex items-center justify-center text-white font-black text-xl shadow-md border border-blue-300">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#0D47A1] to-[#2196F3] flex items-center justify-center text-white font-black text-xl shadow-md border border-blue-300 dark:border-blue-500/30">
               P
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="text-xl font-black tracking-tight text-[#0D47A1]">Purifi</span>
-                <span className="text-xl font-extrabold text-[#2196F3]">Calendario</span>
+                <span className="text-xl font-black tracking-tight text-[#0D47A1] dark:text-blue-400">Purifi</span>
+                <span className="text-xl font-extrabold text-[#2196F3] dark:text-blue-300">Calendario</span>
               </div>
-              <p className="text-[11px] text-slate-500 font-medium -mt-1">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium -mt-1">
                 Agenda Oficial y Avisos Comunitarios
               </p>
             </div>
@@ -124,13 +150,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`relative px-3.5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${
+                  className={`relative px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${
                     isActive
-                      ? 'bg-blue-50 text-[#0D47A1] border border-blue-200'
-                      : 'text-slate-600 hover:text-[#0D47A1] hover:bg-slate-50'
+                      ? 'bg-blue-50 dark:bg-blue-950/60 text-[#0D47A1] dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-[#0D47A1] dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#2196F3]' : 'text-slate-400'}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#2196F3]' : 'text-slate-400 dark:text-slate-400'}`} />
                   <span>{item.label}</span>
                   {item.badge !== undefined && item.badge > 0 && (
                     <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full shadow-sm">
@@ -148,7 +174,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${
                   activeTab === 'panel-organizador'
                     ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                    : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800'
                 }`}
               >
                 <PlusCircle className="w-4 h-4" />
@@ -162,7 +188,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${
                   activeTab === 'panel-admin'
                     ? 'bg-[#0D47A1] text-white shadow-sm'
-                    : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-300'
+                    : 'bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-700'
                 }`}
               >
                 <ShieldAlert className="w-4 h-4" />
@@ -172,22 +198,30 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
 
           {/* User Profile & Auth Trigger */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2">
+            <button
+              onClick={onToggleDarkMode}
+              className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-[#2196F3] transition-colors"
+              title={darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            >
+              {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+            </button>
+
             <button
               onClick={onOpenAuth}
-              className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-blue-300 bg-slate-50 hover:bg-blue-50 transition-all text-left"
+              className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500 bg-slate-50 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-750 transition-all text-left"
             >
               <div className="w-8 h-8 rounded-full bg-[#2196F3] text-white font-bold flex items-center justify-center text-xs shadow-sm">
                 {currentUser.nombre_usuario.charAt(0)}
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-slate-800 leading-none">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-none">
                     {currentUser.nombre_usuario}
                   </span>
                   {getRoleBadge(currentUser.rol)}
                 </div>
-                <span className="text-[11px] text-slate-500">{currentUser.correo}</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">{currentUser.correo}</span>
               </div>
             </button>
           </div>
@@ -195,8 +229,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center gap-2">
             <button
+              onClick={onToggleDarkMode}
+              className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              {darkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
+            </button>
+            <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-slate-600 hover:bg-slate-100"
+              className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -206,11 +246,11 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile Menu Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-slate-200 px-4 pt-2 pb-4 space-y-1 shadow-lg">
-          <div className="p-3 bg-blue-50 rounded-xl mb-2 flex items-center justify-between">
+        <div className="md:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 pt-2 pb-4 space-y-1 shadow-lg">
+          <div className="p-3 bg-blue-50 dark:bg-slate-800/80 rounded-xl mb-2 flex items-center justify-between">
             <div>
-              <p className="font-bold text-sm text-slate-900">{currentUser.nombre_usuario}</p>
-              <p className="text-xs text-slate-600">{currentUser.correo}</p>
+              <p className="font-bold text-sm text-slate-900 dark:text-white">{currentUser.nombre_usuario}</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">{currentUser.correo}</p>
             </div>
             {getRoleBadge(currentUser.rol)}
           </div>
@@ -223,7 +263,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 setMobileMenuOpen(false);
               }}
               className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium flex items-center justify-between ${
-                activeTab === item.id ? 'bg-[#2196F3] text-white font-bold' : 'text-slate-700 hover:bg-slate-100'
+                activeTab === item.id ? 'bg-[#2196F3] text-white font-bold' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
               <div className="flex items-center gap-2">
@@ -264,13 +304,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <button
               onClick={() => {
                 onOpenAuth();
                 setMobileMenuOpen(false);
               }}
-              className="text-xs text-blue-600 font-semibold"
+              className="text-xs text-blue-600 dark:text-blue-400 font-semibold"
             >
               Cambiar cuenta / Iniciar Sesión
             </button>
@@ -279,7 +319,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onOpenDdl();
                 setMobileMenuOpen(false);
               }}
-              className="text-xs text-slate-500 font-medium underline"
+              className="text-xs text-slate-500 dark:text-slate-400 font-medium underline"
             >
               Ver BD MySQL
             </button>
