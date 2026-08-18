@@ -12,7 +12,9 @@ import {
   Menu,
   X,
   Moon,
-  Sun
+  Sun,
+  Activity,
+  HardHat
 } from 'lucide-react';
 import { UserRole, Usuario } from '../types';
 
@@ -56,6 +58,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const navItems = [
     { id: 'inicio', label: 'Inicio', icon: Sparkles },
+    { id: 'operaciones', label: 'Centro de Control', icon: Activity },
     { id: 'calendario', label: 'Calendario', icon: Calendar },
     { id: 'eventos', label: 'Eventos', icon: Calendar },
     { id: 'avisos', label: 'Avisos Important.', icon: ShieldAlert },

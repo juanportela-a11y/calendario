@@ -42,6 +42,7 @@ import { AdminPanel } from './components/AdminPanel';
 import { DatabaseInspectorModal } from './components/DatabaseInspectorModal';
 import { CreateNoticeModal } from './components/CreateNoticeModal';
 import { AuthModal } from './components/AuthModal';
+import { MunicipalOpsDashboard } from './components/operations/MunicipalOpsDashboard';
 
 export default function App() {
   // Application State
@@ -248,6 +249,7 @@ export default function App() {
             <HeroBanner
               onExploreEvents={() => setActiveTab('calendario')}
               onExploreNotices={() => setActiveTab('avisos')}
+              onExploreOperations={() => setActiveTab('operaciones')}
               totalEventsCount={events.length}
               totalNoticesCount={notices.length}
             />
@@ -324,6 +326,11 @@ export default function App() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* TAB: CENTRO DE CONTROL & OPERACIONES MUNICIPALES */}
+        {activeTab === 'operaciones' && (
+          <MunicipalOpsDashboard />
         )}
 
         {/* TAB 2: CALENDARIO */}

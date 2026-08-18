@@ -4,6 +4,7 @@ import { Calendar, Search, MapPin, Sparkles, ChevronRight, BellRing } from 'luci
 interface HeroBannerProps {
   onExploreEvents: () => void;
   onExploreNotices: () => void;
+  onExploreOperations?: () => void;
   totalEventsCount: number;
   totalNoticesCount: number;
 }
@@ -11,6 +12,7 @@ interface HeroBannerProps {
 export const HeroBanner: React.FC<HeroBannerProps> = ({
   onExploreEvents,
   onExploreNotices,
+  onExploreOperations,
   totalEventsCount,
   totalNoticesCount,
 }) => {
@@ -38,14 +40,23 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
         </p>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3">
+          {onExploreOperations && (
+            <button
+              onClick={onExploreOperations}
+              className="px-5 py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-sm shadow-lg transition-all flex items-center gap-2 transform active:scale-95 cursor-pointer"
+            >
+              <span>🚧 Centro de Control Operativo</span>
+              <ChevronRight className="w-4 h-4 text-slate-950" />
+            </button>
+          )}
+
           <button
             onClick={onExploreEvents}
-            className="px-6 py-3.5 rounded-xl bg-white text-[#0D47A1] font-bold text-sm shadow-lg hover:bg-blue-50 transition-all flex items-center gap-2 transform active:scale-95"
+            className="px-5 py-3.5 rounded-xl bg-white text-[#0D47A1] font-bold text-sm shadow-lg hover:bg-blue-50 transition-all flex items-center gap-2 transform active:scale-95"
           >
             <Calendar className="w-4 h-4 text-[#2196F3]" />
-            <span>Consultar Calendario de Eventos ({totalEventsCount})</span>
-            <ChevronRight className="w-4 h-4 text-[#0D47A1]" />
+            <span>Calendario ({totalEventsCount})</span>
           </button>
 
           <button
@@ -53,7 +64,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             className="px-5 py-3.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-semibold text-sm border border-white/30 backdrop-blur-md transition-all flex items-center gap-2"
           >
             <BellRing className="w-4 h-4 text-amber-300" />
-            <span>Ver Avisos Comunitarios ({totalNoticesCount})</span>
+            <span>Avisos ({totalNoticesCount})</span>
           </button>
         </div>
 

@@ -1,6 +1,6 @@
 // Database Relational Entities & App Types for PurifiCalendario
 
-export type UserRole = 'habitante' | 'organizador' | 'administrador';
+export type UserRole = 'habitante' | 'organizador' | 'administrador' | 'funcionario_obras' | 'funcionario_salud';
 
 export type CategoryCode = 
   | 'cultura' 
@@ -66,7 +66,6 @@ export interface Evento {
   cupo_maximo?: number;
   requiere_inscripcion?: boolean;
   imagen_url?: string;
-  // Joined fields for rich UI display
   categoria?: Categoria;
   organizador?: Organizador;
 }
@@ -90,7 +89,7 @@ export interface Notificacion {
   mensaje: string;
   fecha: string;
   leida: boolean;
-  tipo_ref?: 'evento' | 'aviso' | 'sistema';
+  tipo_ref?: 'evento' | 'aviso' | 'sistema' | 'via' | 'salud';
   id_ref?: number;
 }
 
@@ -99,6 +98,154 @@ export interface UsuarioEvento {
   id_usuario: number; // Foreign Key -> Usuario(id_usuario)
   id_evento: number; // Foreign Key -> Evento(id_evento)
   fecha_guardado: string;
+}
+
+// ==========================================
+// MÓDULOS DE GESTIÓN OPERATIVA MUNICIPAL
+// ==========================================
+
+export type SeveridadVia = 'alta' | 'media' | 'baja';
+export type EstadoVia = 'reportado' | 'inspeccion' | 'reparacion' | 'completado';
+
+export interface ReporteVia {
+  id_via: number;
+  titulo: string;
+  direccion: string;
+  barrio: string;
+  coordenadas: [number, number]; // [lat, lng]
+  severidad: SeveridadVia;
+  tipo_dano: string; // 'Hueco Profundo', 'Hundimiento Calzada', 'Derrumbe/Obstrucción', 'Falla de Alcantarillado', 'Pavimento Agrietado'
+  estado: EstadoVia;
+  descripcion: string;
+  foto_antes?: string;
+  foto_despues?: string;
+  material_estimado?: string;
+  cuadrilla_asignada?: string;
+  fecha_reporte: string;
+  fecha_actualizacion?: string;
+  reportado_por: string;
+  costo_estimado_cop?: number;
+  prioridad: 'urgente' | 'alta' | 'media' | 'rutinaria';
+}
+
+export type TipoCorteServicio = 'agua' | 'energia' | 'gas';
+export type EstadoCorte = 'programado' | 'en_curso' | 'restablecido';
+
+export interface CorteProgramado {
+  id_corte: number;
+  tipo: TipoCorteServicio;
+  titulo: string;
+  motivo: string;
+  sector_barrio: string;
+  coordenadas: [number, number];
+  radio_afectacion_m: number;
+  fecha_inicio: string;
+  hora_inicio: string;
+  fecha_estimada_fin: string;
+  hora_estimada_fin: string;
+  cuadrilla_responsable: string;
+  empresa_prestadora: string; // 'Empresas Públicas de Purificación EMPOPUR', 'CELSIA Tolima', 'Alcanos de Colombia'
+  estado: EstadoCorte;
+  urgente: boolean;
+  poblacion_afectada_aprox?: number;
+  puntos_distribucion_emergencia?: string;
+  creado_por: string;
+}
+
+export type TipoJornadaSalud = 
+  | 'esterilizacion_canina_felina' 
+  | 'vacunacion_antirrabica' 
+  | 'tamizaje_salud_publica' 
+  | 'desparasitacion_masiva';
+
+export type EstadoJornada = 'programada' | 'en_curso' | 'finalizada';
+
+export interface PersonalAsignado {
+  id_personal: number;
+  nombre: string;
+  cargo: string;
+  tarjeta_profesional?: string;
+  entidad: string;
+}
+
+export type PersonalSaludAsignado = PersonalAsignado;
+
+export interface InscripcionMascota {
+  id_inscrito: number;
+  id_jornada: number;
+  tutor_nombre: string;
+  tutor_cedula: string;
+  tutor_telefono: string;
+  barrio: string;
+  mascota_nombre: string;
+  especie: 'canino' | 'felino';
+  raza?: string;
+  edad_meses?: number;
+  hora_turno: string;
+  estado: 'inscrito' | 'atendido' | 'no_asistio' | 'cancelado';
+}
+
+export type InscritoJornada = InscripcionMascota;
+
+export interface JornadaSaludEsterilizacion {
+  id_jornada: number;
+  titulo: string;
+  tipo: TipoJornadaSalud;
+  lugar: string;
+  barrio: string;
+  coordenadas: [number, number];
+  fecha: string;
+  hora_inicio: string;
+  hora_fin: string;
+  cupos_totales: number;
+  cupos_ocupados: number;
+  personal_asignado: PersonalAsignado[];
+  inscritos: InscripcionMascota[];
+  requisitos: string;
+  estado: EstadoJornada;
+  responsable_entidad: string;
+  creado_por: string;
+}
+
+// Panel de Bitácora y Auditoría
+export type ModuloAuditoria = 'Vías' | 'Cortes' | 'Salud & Esterilización' | 'Mapa' | 'Sistema';
+export type AccionAuditoria = 
+  | 'CREACIÓN' 
+  | 'ACTUALIZACIÓN_ESTADO' 
+  | 'ADJUNCIÓN_FOTO' 
+  | 'ASIGNACIÓN_PERSONAL' 
+  | 'CAMBIO_COORDENADAS' 
+  | 'CIERRE_INCIDENCIA'
+  | 'REGISTRO_INSCRIPCIÓN';
+
+export interface RegistroAuditoria {
+  id_log: number;
+  timestamp: string; // ISO or formatted string
+  funcionario_nombre: string;
+  funcionario_rol: string;
+  funcionario_avatar?: string;
+  modulo: ModuloAuditoria;
+  accion: AccionAuditoria;
+  descripcion: string;
+  id_referencia?: number | string;
+  detalles_anteriores?: string;
+  detalles_nuevos?: string;
+}
+
+// Map Layers Visibility State
+export interface MapLayersVisibility {
+  vias: boolean;
+  cortes: boolean;
+  salud: boolean;
+  radiosAfectacion: boolean;
+}
+
+// Global Filter for Ops Dashboard
+export interface OpsGlobalFilterState {
+  searchQuery: string;
+  barrioSeleccionado: string; // 'todos' or barrio name
+  estadoFiltro: string; // 'todos' or specific state
+  severidadFiltro: string; // 'todas' | 'alta' | 'media' | 'baja'
 }
 
 // DTOs for creating entities
@@ -128,7 +275,7 @@ export interface CreateNotificationDTO {
   id_usuario: number;
   titulo: string;
   mensaje: string;
-  tipo_ref?: 'evento' | 'aviso' | 'sistema';
+  tipo_ref?: 'evento' | 'aviso' | 'sistema' | 'via' | 'salud';
   id_ref?: number;
 }
 

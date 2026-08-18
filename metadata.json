@@ -1,6 +1,6 @@
 {
   "name": "PurifiCalendario",
-  "description": "Plataforma de eventos, avisos comunitarios y agenda digital del municipio de Purificación, Tolima",
+  "description": "Centro de Control Operativo Municipal, Gestión de Malla Vial, Cortes Programados de Servicios, Jornadas de Zoonosis y Agenda Digital de Purificación, Tolima",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
