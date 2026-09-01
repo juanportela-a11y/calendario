@@ -140,10 +140,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         userName = fbUser.displayName || '';
         userPhoto = fbUser.photoURL || '';
       } catch (popupErr: any) {
-        console.warn('Firebase popup blocked on mobile/sandbox:', popupErr);
-        // Do not assign a random generic account. Show clear message & activate direct Gmail input.
+        console.warn('Firebase Google Auth popup issue:', popupErr);
+        // If popup is closed by user, don't show an intrusive error, just let them try again
+        if (popupErr?.code === 'auth/popup-closed-by-user') {
+          setLoading(false);
+          return;
+        }
+        // If popup was blocked by browser or restricted environment, activate direct verified entry
         setShowGmailDirectInput(true);
-        setErrorMessage('La ventana emergente de Google fue bloqueada o cerrada. Por favor escribe tu correo Gmail abajo para ingresar directamente con tu cuenta.');
+        setErrorMessage('El navegador bloqueó la ventana emergente de Google. Puedes ingresar tu correo de Google directamente abajo sin inconvenientes:');
         setLoading(false);
         return;
       }
