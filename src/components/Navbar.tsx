@@ -128,13 +128,16 @@ export const Navbar: React.FC<NavbarProps> = ({
         userPhoto = fbUser.photoURL || '';
       } catch (popupErr) {
         console.warn('Google popup notice:', popupErr);
-        userEmail = 'habitante@purificacion-tolima.gov.co';
-        userName = 'Ciudadano Purificación (Google)';
+        // Do not auto-assign a random fallback user. Open the Auth modal so the user can enter their own account.
+        if (onOpenLogin) onOpenLogin();
+        else onOpenAuth();
+        return;
       }
 
       if (!userEmail) {
-        userEmail = 'habitante@purificacion-tolima.gov.co';
-        userName = 'Ciudadano Purificación';
+        if (onOpenLogin) onOpenLogin();
+        else onOpenAuth();
+        return;
       }
 
       if (onGoogleLogin) {
@@ -144,7 +147,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           photoUrl: userPhoto
         });
       } else {
-        const existing = allUsers.find(u => u.correo.toLowerCase() === userEmail.toLowerCase()) || allUsers.find(u => u.rol === 'habitante');
+        const existing = allUsers.find(u => u.correo.toLowerCase() === userEmail.toLowerCase());
         if (existing) {
           setCurrentUser(existing);
         }

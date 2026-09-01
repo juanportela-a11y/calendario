@@ -140,16 +140,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         userName = fbUser.displayName || '';
         userPhoto = fbUser.photoURL || '';
       } catch (popupErr: any) {
-        console.warn('Firebase popup blocked on mobile/sandbox, activating direct mobile login:', popupErr);
-        // Show seamless direct input for mobile users whose browser blocked popup
+        console.warn('Firebase popup blocked on mobile/sandbox:', popupErr);
+        // Do not assign a random generic account. Show clear message & activate direct Gmail input.
         setShowGmailDirectInput(true);
-        userEmail = 'habitante@purificacion-tolima.gov.co';
-        userName = 'Ciudadano Purificación (Google)';
+        setErrorMessage('La ventana emergente de Google fue bloqueada o cerrada. Por favor escribe tu correo Gmail abajo para ingresar directamente con tu cuenta.');
+        setLoading(false);
+        return;
       }
 
       if (!userEmail) {
-        userEmail = 'habitante@purificacion-tolima.gov.co';
-        userName = 'Ciudadano Purificación';
+        setShowGmailDirectInput(true);
+        setErrorMessage('No se detectó un correo de Google. Por favor ingresa tu Gmail abajo.');
+        setLoading(false);
+        return;
       }
 
       if (onGoogleLogin) {
