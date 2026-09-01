@@ -1,18 +1,16 @@
-const CACHE_NAME = 'purificalendario-cache-v2';
+const CACHE_NAME = 'purificalendario-cache-v3';
 const STATIC_ASSETS = [
   '/',
-  '/index.html',
   '/manifest.json',
-  '/icon.svg',
-  '/icon-192.svg',
-  '/icon-512.svg',
-  '/icon-maskable.svg'
+  '/icon.svg'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
+      return cache.addAll(STATIC_ASSETS).catch(() => {
+        // Non-blocking asset cache
+      });
     })
   );
   self.skipWaiting();
@@ -35,15 +33,41 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  const url = new URL(event.request.url);
+
+  // NEVER cache API requests, Vite dev assets, or modules
+  if (
+    url.pathname.startsWith('/api') ||
+    url.pathname.startsWith('/@') ||
+    url.pathname.startsWith('/src') ||
+    url.pathname.includes('node_modules') ||
+    url.pathname.endsWith('.ts') ||
+    url.pathname.endsWith('.tsx')
+  ) {
+    return;
+  }
+
+  // Network-First with Cache fallback for general web assets
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      return (
-        cachedResponse ||
-        fetch(event.request).catch(() => {
-          return caches.match('/');
-        })
-      );
-    })
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && event.request.url.startsWith('http')) {
+          const resClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, resClone).catch(() => {});
+          });
+        }
+        return networkResponse;
+      })
+      .catch(async () => {
+        const cached = await caches.match(event.request);
+        if (cached) return cached;
+        if (event.request.headers.get('accept')?.includes('text/html')) {
+          const rootCached = await caches.match('/');
+          if (rootCached) return rootCached;
+        }
+        return new Response('Red no disponible', { status: 503, statusText: 'Offline' });
+      })
   );
 });
 

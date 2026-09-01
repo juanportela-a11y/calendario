@@ -7,7 +7,6 @@ import {
   Activity, 
   CheckCircle2, 
   Sparkles,
-  CloudCheck,
   RefreshCw,
   Vote,
   MessageSquarePlus,
@@ -112,7 +111,7 @@ export const MunicipalOpsDashboard: React.FC = () => {
 
           {isFirebaseSynced ? (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold">
-              <CloudCheck className="w-4 h-4" />
+              <CheckCircle2 className="w-4 h-4" />
               <span>Firestore Offline-Ready</span>
             </div>
           ) : (
