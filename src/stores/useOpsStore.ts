@@ -31,7 +31,11 @@ import {
   subscribeToJornadas,
   saveJornadaToFirestore,
   subscribeToAuditLogs,
-  saveAuditLogToFirestore
+  saveAuditLogToFirestore,
+  subscribeToEncuestas,
+  saveEncuestaToFirestore,
+  subscribeToNotifiedUsers,
+  saveNotifiedUserToFirestore
 } from '../adapters/firebaseOpsAdapter';
 import { OfflineStorageManager, STORAGE_KEYS } from '../utils/offlineStorage';
 
@@ -64,7 +68,7 @@ interface OpsState {
   initFirestoreSync: () => () => void;
   addAuditLog: (log: Omit<RegistroAuditoria, 'id_log' | 'timestamp'> & { timestamp?: string; id_log?: number }) => Promise<void>;
   addUserPoints: (pts: number, motivo: string) => void;
-  markNoticeAsReadByCitizen: (avisoTitulo: string, userName: string) => void;
+  markNoticeAsReadByCitizen: (avisoTitulo: string, userName: string, noticeId?: number) => Promise<void> | void;
   addReportComment: (idVia: number, autor: string, texto: string, rol?: string) => void;
   deleteReporteVia: (idVia: number, userMod?: string) => Promise<void>;
   addCustomEncuesta: (pregunta: string, opciones: string[], categoria?: 'obras' | 'salud' | 'cultura' | 'servicios', creadoPor?: string) => Promise<void>;
@@ -135,7 +139,7 @@ export const useOpsStore = create<OpsState>((set, get) => ({
     get().showToast(`🏆 +${pts} PTS cívicos ganados: ${motivo}`);
   },
 
-  markNoticeAsReadByCitizen: (avisoTitulo, userName) => {
+  markNoticeAsReadByCitizen: async (avisoTitulo, userName, noticeId) => {
     const { notifiedUsers, addUserPoints, showToast } = get();
     const alreadyNotified = notifiedUsers.some(u => u.nombre === userName && u.avisoTitulo === avisoTitulo);
     if (!alreadyNotified) {
@@ -147,6 +151,11 @@ export const useOpsStore = create<OpsState>((set, get) => ({
           ...notifiedUsers
         ]
       });
+      try {
+        await saveNotifiedUserToFirestore(userName, noticeId);
+      } catch (e) {
+        console.warn('Error saving notice read to firestore:', e);
+      }
       addUserPoints(15, 'Confirmación de lectura de aviso urgente');
       showToast('✓ ¡Has confirmado la lectura del aviso municipal!');
     }
@@ -213,6 +222,7 @@ export const useOpsStore = create<OpsState>((set, get) => ({
     };
 
     set({ encuestas: [newEncuesta, ...encuestas] });
+    await saveEncuestaToFirestore(newEncuesta);
 
     const now = new Date();
     const log: RegistroAuditoria = {
@@ -349,7 +359,27 @@ export const useOpsStore = create<OpsState>((set, get) => ({
           }
         });
 
-        unsubs = [unsubVias, unsubCortes, unsubJornadas, unsubLogs];
+        const unsubEncuestas = subscribeToEncuestas((incomingEncuestas) => {
+          if (incomingEncuestas && incomingEncuestas.length > 0) {
+            set({ encuestas: incomingEncuestas });
+          }
+        });
+
+        const unsubNotified = subscribeToNotifiedUsers((usersList) => {
+          if (usersList && usersList.length > 0) {
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+            set({
+              notifiedUsers: usersList.map(u => ({
+                nombre: u,
+                fecha: timeStr,
+                avisoTitulo: 'Aviso Municipal Oficial'
+              }))
+            });
+          }
+        });
+
+        unsubs = [unsubVias, unsubCortes, unsubJornadas, unsubLogs, unsubEncuestas, unsubNotified];
         set({ isFirebaseSynced: true, isLoading: false });
       } catch (err) {
         console.warn('Fallback a almacenamiento local/memoria:', err);
@@ -803,6 +833,7 @@ export const useOpsStore = create<OpsState>((set, get) => ({
     };
 
     set({ encuestas: encuestas.map(e => e.id_encuesta === idEncuesta ? updatedEncuesta : e) });
+    await saveEncuestaToFirestore(updatedEncuesta);
 
     const now = new Date();
     const log: RegistroAuditoria = {

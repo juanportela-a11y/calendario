@@ -20,7 +20,8 @@ import {
   saveEventoToFirestore, 
   deleteEventoFromFirestore,
   saveAvisoToFirestore,
-  deleteAvisoFromFirestore 
+  deleteAvisoFromFirestore,
+  saveUsuarioToFirestore
 } from './firebaseOpsAdapter';
 import { triggerLocalPush } from '../utils/notificationUtils';
 
@@ -355,14 +356,36 @@ export class ApiClientAdapter {
       puntos_civicos: 100
     };
 
-    return this.request<{ success: boolean; user: Usuario; token: string }>('/api/auth/google', {
-      method: 'POST',
-      body: JSON.stringify(googleData),
-    }, {
-      success: true,
-      user: fallbackUser,
-      token: `purifi_google_${fallbackUser.id_usuario}`
-    });
+    let res: { success: boolean; user: Usuario; token: string };
+    try {
+      res = await this.request<{ success: boolean; user: Usuario; token: string }>('/api/auth/google', {
+        method: 'POST',
+        body: JSON.stringify(googleData),
+      }, {
+        success: true,
+        user: fallbackUser,
+        token: `purifi_google_${fallbackUser.id_usuario}`
+      });
+    } catch {
+      res = {
+        success: true,
+        user: fallbackUser,
+        token: `purifi_google_${fallbackUser.id_usuario}`
+      };
+    }
+
+    if (res.user) {
+      if (!INITIAL_USERS.some(u => u.id_usuario === res.user.id_usuario)) {
+        INITIAL_USERS.push(res.user);
+      }
+      try {
+        await saveUsuarioToFirestore(res.user);
+      } catch (e) {
+        console.warn('Error saving Google user to Firestore:', e);
+      }
+    }
+
+    return res;
   }
 
   static async register(userData: Partial<Usuario>): Promise<{ success: boolean; user: Usuario; token: string }> {
@@ -379,14 +402,36 @@ export class ApiClientAdapter {
       puntos_civicos: 50
     };
 
-    return this.request<{ success: boolean; user: Usuario; token: string }>('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    }, {
-      success: true,
-      user: fallbackUser,
-      token: `purifi_reg_${fallbackUser.id_usuario}`
-    });
+    let res: { success: boolean; user: Usuario; token: string };
+    try {
+      res = await this.request<{ success: boolean; user: Usuario; token: string }>('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(userData),
+      }, {
+        success: true,
+        user: fallbackUser,
+        token: `purifi_reg_${fallbackUser.id_usuario}`
+      });
+    } catch {
+      res = {
+        success: true,
+        user: fallbackUser,
+        token: `purifi_reg_${fallbackUser.id_usuario}`
+      };
+    }
+
+    if (res.user) {
+      if (!INITIAL_USERS.some(u => u.id_usuario === res.user.id_usuario)) {
+        INITIAL_USERS.push(res.user);
+      }
+      try {
+        await saveUsuarioToFirestore(res.user);
+      } catch (e) {
+        console.warn('Error saving registered user to Firestore:', e);
+      }
+    }
+
+    return res;
   }
 
   static async loginOrCreateUser(data: Partial<Usuario>): Promise<Usuario> {
@@ -400,28 +445,56 @@ export class ApiClientAdapter {
       preferencias_categorias: ['cultura' as CategoryCode],
       puntos_civicos: 50
     };
-    return this.request<Usuario>('/api/users', {
+    const res = await this.request<Usuario>('/api/users', {
       method: 'POST',
       body: JSON.stringify(data),
     }, fallback);
+
+    if (res) {
+      if (!INITIAL_USERS.some(u => u.id_usuario === res.id_usuario)) {
+        INITIAL_USERS.push(res);
+      }
+      try {
+        await saveUsuarioToFirestore(res);
+      } catch (e) {}
+    }
+    return res;
   }
 
   static async updateUserPreferences(userId: number, preferences: string[]): Promise<Usuario> {
     const user = INITIAL_USERS.find(u => u.id_usuario === userId) || INITIAL_USERS[0];
     const updated: Usuario = { ...user, preferencias_categorias: preferences as CategoryCode[] };
-    return this.request<Usuario>(`/api/users/${userId}/preferences`, {
+    const res = await this.request<Usuario>(`/api/users/${userId}/preferences`, {
       method: 'PUT',
       body: JSON.stringify({ preferences }),
     }, updated);
+
+    if (res) {
+      const idx = INITIAL_USERS.findIndex(u => u.id_usuario === res.id_usuario);
+      if (idx !== -1) INITIAL_USERS[idx] = res;
+      try {
+        await saveUsuarioToFirestore(res);
+      } catch (e) {}
+    }
+    return res;
   }
 
   static async updateUser(userId: number, data: Partial<Usuario>): Promise<Usuario> {
     const user = INITIAL_USERS.find(u => u.id_usuario === userId) || INITIAL_USERS[0];
     const updated: Usuario = { ...user, ...data };
-    return this.request<Usuario>(`/api/users/${userId}`, {
+    const res = await this.request<Usuario>(`/api/users/${userId}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }, updated);
+
+    if (res) {
+      const idx = INITIAL_USERS.findIndex(u => u.id_usuario === res.id_usuario);
+      if (idx !== -1) INITIAL_USERS[idx] = res;
+      try {
+        await saveUsuarioToFirestore(res);
+      } catch (e) {}
+    }
+    return res;
   }
 
   // Password Recovery Methods

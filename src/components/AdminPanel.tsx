@@ -17,7 +17,11 @@ import {
   FileText,
   Clock,
   History,
-  Check
+  Check,
+  RefreshCw,
+  Award,
+  MapPin,
+  Phone
 } from 'lucide-react';
 import { Aviso, Categoria, CreateAvisoDTO, CreateEventoDTO, Evento, Organizador, Usuario, ReporteVia, CorteProgramado } from '../types';
 import { useOpsStore } from '../stores/useOpsStore';
@@ -43,6 +47,8 @@ interface AdminPanelProps {
   onDeleteNotice: (id: number) => Promise<void>;
   onOpenDdl: () => void;
   onSendBroadcastNotification?: (titulo: string, mensaje: string, tipo: string) => Promise<void>;
+  onRefreshAll?: () => Promise<void> | void;
+  onUpdateUserRole?: (userId: number, newRole: any) => Promise<void>;
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
@@ -57,10 +63,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onDeleteEvent,
   onDeleteNotice,
   onOpenDdl,
-  onSendBroadcastNotification
+  onSendBroadcastNotification,
+  onRefreshAll,
+  onUpdateUserRole
 }) => {
   const [activeTab, setActiveTab] = useState<'eventos' | 'avisos' | 'despacho_cuadrillas' | 'lectura_avisos' | 'encuestas_admin' | 'auditoria' | 'usuarios' | 'despacho_notificaciones'>('eventos');
   const [search, setSearch] = useState('');
+  const [userRoleFilter, setUserRoleFilter] = useState<string>('todos');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Notification form state
   const [notifTitulo, setNotifTitulo] = useState('');
@@ -150,7 +160,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           {/* Export Buttons */}
           <button
             onClick={() => generateMunicipalOpsPDF(vias, cortes, jornadas)}
-            className="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow"
+            className="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow cursor-pointer"
           >
             <FileText className="w-4 h-4" />
             <span>Descargar PDF Oficial</span>
@@ -158,7 +168,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
           <button
             onClick={() => exportViasToCSV(vias)}
-            className="px-3.5 py-2.5 rounded-xl bg-blue-800 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow"
+            className="px-3.5 py-2.5 rounded-xl bg-blue-800 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow cursor-pointer"
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-300" />
             <span>Exportar CSV</span>
@@ -166,7 +176,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
           <button
             onClick={onOpenDdl}
-            className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-100 text-xs font-bold border border-blue-400/30 flex items-center gap-1.5"
+            className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-100 text-xs font-bold border border-blue-400/30 flex items-center gap-1.5 cursor-pointer"
           >
             <Database className="w-4 h-4 text-[#64B5F6]" />
             <span>Ver BD MySQL</span>
@@ -174,12 +184,46 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
           <button
             onClick={onOpenCreateNotice}
-            className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-900 text-xs font-bold flex items-center gap-1.5 shadow"
+            className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-900 text-xs font-bold flex items-center gap-1.5 shadow cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Publicar Aviso</span>
           </button>
         </div>
+      </div>
+
+      {/* Live Sync Status & Quick Refresh */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-blue-50/80 dark:bg-slate-800/80 border border-blue-200 dark:border-slate-700 px-4 py-3 rounded-2xl shadow-sm">
+        <div className="flex items-center gap-2.5">
+          <span className="relative flex h-3 w-3">
+            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isFirebaseSynced ? 'bg-emerald-400' : 'bg-amber-400'} opacity-75`}></span>
+            <span className={`relative inline-flex rounded-full h-3 w-3 ${isFirebaseSynced ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+          </span>
+          <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
+            {isFirebaseSynced ? 'Sincronización en Tiempo Real Activa (Firestore & Node/MySQL)' : 'Sincronización en Memoria Activa'}
+          </div>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 border-l border-slate-300 dark:border-slate-600 pl-2.5 hidden sm:inline">
+            Último pulso: {lastAuditSyncTime || 'En línea'}
+          </span>
+        </div>
+
+        {onRefreshAll && (
+          <button
+            onClick={async () => {
+              setIsRefreshing(true);
+              try {
+                await onRefreshAll();
+              } finally {
+                setTimeout(() => setIsRefreshing(false), 500);
+              }
+            }}
+            disabled={isRefreshing}
+            className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50 shadow-xs"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-blue-600 dark:text-blue-400 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>{isRefreshing ? 'Sincronizando...' : 'Sincronizar Ahora'}</span>
+          </button>
+        )}
       </div>
 
       {/* Metrics Grid */}
@@ -844,33 +888,102 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
         {/* TAB 5: USUARIOS */}
         {activeTab === 'usuarios' && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-extrabold uppercase border-b border-slate-200 dark:border-slate-800">
-                  <th className="p-4">Nombre Usuario</th>
-                  <th className="p-4">Correo</th>
-                  <th className="p-4">Rol</th>
-                  <th className="p-4">Fecha Registro</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {users
-                  .filter(u => u.nombre_usuario.toLowerCase().includes(search.toLowerCase()) || u.correo.toLowerCase().includes(search.toLowerCase()))
-                  .map(user => (
-                    <tr key={user.id_usuario} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                      <td className="p-4 font-bold text-slate-900 dark:text-white">{user.nombre_usuario}</td>
-                      <td className="p-4 text-slate-600 dark:text-slate-300">{user.correo}</td>
-                      <td className="p-4">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                          {user.rol}
-                        </span>
-                      </td>
-                      <td className="p-4 text-slate-500">{user.fecha_registro}</td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+          <div className="p-6 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-2">
+                {['todos', 'habitante', 'organizador', 'administrador', 'funcionario_obras', 'funcionario_salud'].map((role) => (
+                  <button
+                    key={role}
+                    onClick={() => setUserRoleFilter(role)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
+                      userRoleFilter === role
+                        ? 'bg-[#0D47A1] dark:bg-blue-600 text-white shadow-sm'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    {role === 'todos' ? `Todos (${users.length})` : `${role.replace('_', ' ')} (${users.filter(u => u.rol === role).length})`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-extrabold uppercase border-b border-slate-200 dark:border-slate-800">
+                    <th className="p-4">Usuario</th>
+                    <th className="p-4">Correo</th>
+                    <th className="p-4">Ubicación / Barrio</th>
+                    <th className="p-4">Teléfono</th>
+                    <th className="p-4">Puntos Cívicos</th>
+                    <th className="p-4">Rol en el Sistema</th>
+                    <th className="p-4">Fecha Registro</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {users
+                    .filter(u => {
+                      const matchesSearch = u.nombre_usuario.toLowerCase().includes(search.toLowerCase()) || 
+                                           u.correo.toLowerCase().includes(search.toLowerCase()) ||
+                                           (u.barrio && u.barrio.toLowerCase().includes(search.toLowerCase()));
+                      const matchesRole = userRoleFilter === 'todos' || u.rol === userRoleFilter;
+                      return matchesSearch && matchesRole;
+                    })
+                    .map(user => (
+                      <tr key={user.id_usuario} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                        <td className="p-4">
+                          <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span>{user.nombre_usuario}</span>
+                            {user.rol === 'administrador' && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 font-black">ADMIN</span>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-slate-400">ID #{user.id_usuario}</div>
+                        </td>
+                        <td className="p-4 text-slate-600 dark:text-slate-300 font-mono text-[11px]">{user.correo}</td>
+                        <td className="p-4 text-slate-600 dark:text-slate-300">
+                          <div className="flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                            <span>{user.barrio || 'El Centro'}</span>
+                          </div>
+                        </td>
+                        <td className="p-4 text-slate-600 dark:text-slate-300">
+                          <div className="flex items-center gap-1.5">
+                            <Phone className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                            <span>{user.telefono || '310 000 0000'}</span>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 font-bold text-[11px] border border-amber-200 dark:border-amber-800">
+                            <Award className="w-3.5 h-3.5 text-amber-500" />
+                            <span>{user.puntos_civicos || 50} pts</span>
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          {onUpdateUserRole ? (
+                            <select
+                              value={user.rol}
+                              onChange={(e) => onUpdateUserRole(user.id_usuario, e.target.value)}
+                              className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-bold text-slate-800 dark:text-white capitalize focus:outline-none"
+                            >
+                              <option value="habitante">Habitante</option>
+                              <option value="organizador">Organizador</option>
+                              <option value="funcionario_obras">Funcionario Obras</option>
+                              <option value="funcionario_salud">Funcionario Salud</option>
+                              <option value="administrador">Administrador</option>
+                            </select>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                              {user.rol}
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4 text-slate-500 text-[11px]">{user.fecha_registro}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

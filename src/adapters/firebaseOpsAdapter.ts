@@ -17,7 +17,9 @@ import {
   JornadaSaludEsterilizacion, 
   RegistroAuditoria,
   Evento,
-  Aviso
+  Aviso,
+  Usuario,
+  EncuestaCiudadana
 } from '../types';
 import { 
   INITIAL_VIAS, 
@@ -25,7 +27,7 @@ import {
   INITIAL_JORNADAS_SALUD, 
   INITIAL_AUDIT_LOGS 
 } from '../data/municipalOpsData';
-import { INITIAL_EVENTS, INITIAL_NOTICES } from '../data/initialData';
+import { INITIAL_EVENTS, INITIAL_NOTICES, INITIAL_USERS } from '../data/initialData';
 
 // Collections names
 export const COLLECTIONS = {
@@ -34,7 +36,10 @@ export const COLLECTIONS = {
   JORNADAS_SALUD: 'jornadas_salud',
   AUDIT_LOGS: 'audit_logs',
   EVENTOS: 'eventos',
-  AVISOS: 'avisos'
+  AVISOS: 'avisos',
+  USUARIOS: 'usuarios',
+  ENCUESTAS: 'encuestas',
+  LECTURA_AVISOS: 'lectura_avisos'
 };
 
 // Helper to remove undefined fields recursively to prevent Firestore errors
@@ -53,9 +58,20 @@ export function sanitizeForFirestore<T extends Record<string, any>>(obj: T): T {
   return clean;
 }
 
-// Seed initial operational data, events and notices to Firestore if collections are empty
+// Seed initial operational data, events, notices, and users to Firestore if collections are empty
 export const seedInitialOpsDataIfEmpty = async () => {
   try {
+    const usersSnap = await getDocs(collection(db, COLLECTIONS.USUARIOS));
+    if (usersSnap.empty) {
+      console.log('Seeding initial Usuarios into Firestore...');
+      const batch = writeBatch(db);
+      INITIAL_USERS.forEach((item) => {
+        const ref = doc(db, COLLECTIONS.USUARIOS, String(item.id_usuario));
+        batch.set(ref, sanitizeForFirestore(item));
+      });
+      await batch.commit();
+    }
+
     const eventsSnap = await getDocs(collection(db, COLLECTIONS.EVENTOS));
     if (eventsSnap.empty) {
       console.log('Seeding initial Eventos into Firestore...');
@@ -288,4 +304,89 @@ export const subscribeToAuditLogs = (callback: (logs: RegistroAuditoria[]) => vo
 export const saveAuditLogToFirestore = async (logItem: RegistroAuditoria) => {
   const ref = doc(db, COLLECTIONS.AUDIT_LOGS, String(logItem.id_log));
   await setDoc(ref, sanitizeForFirestore(logItem));
+};
+
+// --- REAL-TIME USUARIOS ---
+export const subscribeToUsuarios = (callback: (users: Usuario[]) => void): Unsubscribe => {
+  const q = collection(db, COLLECTIONS.USUARIOS);
+  return onSnapshot(q, (snapshot) => {
+    const list: Usuario[] = [];
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data() as Usuario;
+      list.push(data);
+    });
+    list.sort((a, b) => (Number(a.id_usuario) || 0) - (Number(b.id_usuario) || 0));
+    callback(list);
+  }, (err) => {
+    console.error('Firestore subscribeToUsuarios error:', err);
+  });
+};
+
+export const saveUsuarioToFirestore = async (user: Usuario) => {
+  const ref = doc(db, COLLECTIONS.USUARIOS, String(user.id_usuario));
+  const sanitized = sanitizeForFirestore({
+    id_usuario: Number(user.id_usuario),
+    nombre_usuario: String(user.nombre_usuario || '').trim(),
+    correo: String(user.correo || '').trim().toLowerCase(),
+    contrasena: user.contrasena ? String(user.contrasena) : undefined,
+    rol: user.rol || 'habitante',
+    preferencias_categorias: user.preferencias_categorias || ['cultura', 'deporte'],
+    fecha_registro: user.fecha_registro || new Date().toISOString().split('T')[0],
+    telefono: user.telefono ? String(user.telefono).trim() : '',
+    barrio: user.barrio ? String(user.barrio).trim() : 'El Centro',
+    puntos_civicos: user.puntos_civicos !== undefined ? Number(user.puntos_civicos) : 50
+  });
+  await setDoc(ref, sanitized, { merge: true });
+};
+
+export const deleteUsuarioFromFirestore = async (id_usuario: number) => {
+  const ref = doc(db, COLLECTIONS.USUARIOS, String(id_usuario));
+  await deleteDoc(ref);
+};
+
+// --- REAL-TIME ENCUESTAS CIUDADANAS ---
+export const subscribeToEncuestas = (callback: (encuestas: EncuestaCiudadana[]) => void): Unsubscribe => {
+  const q = collection(db, COLLECTIONS.ENCUESTAS);
+  return onSnapshot(q, (snapshot) => {
+    const list: EncuestaCiudadana[] = [];
+    snapshot.forEach((docSnap) => {
+      list.push(docSnap.data() as EncuestaCiudadana);
+    });
+    list.sort((a, b) => b.id_encuesta - a.id_encuesta);
+    callback(list);
+  }, (err) => {
+    console.error('Firestore subscribeToEncuestas error:', err);
+  });
+};
+
+export const saveEncuestaToFirestore = async (encuesta: EncuestaCiudadana) => {
+  const ref = doc(db, COLLECTIONS.ENCUESTAS, String(encuesta.id_encuesta));
+  await setDoc(ref, sanitizeForFirestore(encuesta), { merge: true });
+};
+
+// --- REAL-TIME LECTURA DE AVISOS ---
+export const subscribeToNotifiedUsers = (callback: (users: string[]) => void): Unsubscribe => {
+  const q = collection(db, COLLECTIONS.LECTURA_AVISOS);
+  return onSnapshot(q, (snapshot) => {
+    const list: string[] = [];
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      if (data && data.usuario) {
+        list.push(data.usuario);
+      }
+    });
+    callback(list);
+  }, (err) => {
+    console.error('Firestore subscribeToNotifiedUsers error:', err);
+  });
+};
+
+export const saveNotifiedUserToFirestore = async (usuario: string, noticeId?: number) => {
+  const docId = `${usuario.replace(/[^a-zA-Z0-9]/g, '_')}_${noticeId || 'general'}`;
+  const ref = doc(db, COLLECTIONS.LECTURA_AVISOS, docId);
+  await setDoc(ref, {
+    usuario,
+    noticeId: noticeId || null,
+    timestamp: new Date().toISOString()
+  }, { merge: true });
 };

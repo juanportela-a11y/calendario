@@ -259,6 +259,7 @@ export type AccionAuditoria =
   | 'CREACIÓN' 
   | 'ACTUALIZACIÓN'
   | 'ACTUALIZACIÓN_ESTADO' 
+  | 'ACTUALIZAR_ROL'
   | 'ELIMINACIÓN'
   | 'INICIO_SESIÓN'
   | 'REGISTRO_USUARIO'

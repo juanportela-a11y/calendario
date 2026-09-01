@@ -28,6 +28,12 @@ import {
   Usuario 
 } from './types';
 import { ApiClientAdapter } from './adapters/apiClient';
+import { 
+  subscribeToEventos, 
+  subscribeToAvisos, 
+  subscribeToUsuarios,
+  saveUsuarioToFirestore
+} from './adapters/firebaseOpsAdapter';
 import { OfflineStorageManager, STORAGE_KEYS } from './utils/offlineStorage';
 import { OfflineStatusIndicator } from './components/common/OfflineStatusIndicator';
 import { useUpcomingEventNotifier } from './utils/savedEventNotificationService';
@@ -210,8 +216,45 @@ export default function App() {
   // Real-time Firestore synchronization active at the root level of the application
   useEffect(() => {
     const cleanupSync = initFirestoreSync();
+
+    // Subscribe in real-time to Events
+    const unsubEvents = subscribeToEventos((liveEvents) => {
+      if (liveEvents && liveEvents.length > 0) {
+        setEvents(liveEvents);
+        OfflineStorageManager.saveCache(STORAGE_KEYS.EVENTS, liveEvents);
+      }
+    });
+
+    // Subscribe in real-time to Notices
+    const unsubNotices = subscribeToAvisos((liveNotices) => {
+      if (liveNotices && liveNotices.length > 0) {
+        setNotices(liveNotices);
+        OfflineStorageManager.saveCache(STORAGE_KEYS.NOTICES, liveNotices);
+      }
+    });
+
+    // Subscribe in real-time to Users
+    const unsubUsers = subscribeToUsuarios((liveUsers) => {
+      if (liveUsers && liveUsers.length > 0) {
+        setUsers(liveUsers);
+        // Automatically sync active user profile if updated remotely
+        setCurrentUser(prev => {
+          if (!prev) return null;
+          const found = liveUsers.find(u => u.id_usuario === prev.id_usuario);
+          if (found) {
+            localStorage.setItem('purifi_active_user', JSON.stringify(found));
+            return found;
+          }
+          return prev;
+        });
+      }
+    });
+
     return () => {
       if (cleanupSync) cleanupSync();
+      if (unsubEvents) unsubEvents();
+      if (unsubNotices) unsubNotices();
+      if (unsubUsers) unsubUsers();
     };
   }, []);
 
@@ -513,6 +556,35 @@ export default function App() {
       return { success: false, error: 'No se pudo iniciar sesión con Google' };
     } catch (err: any) {
       return { success: false, error: err.message || 'Error en autenticación con Google' };
+    }
+  };
+
+  const handleUpdateUserRole = async (userId: number, newRole: any) => {
+    try {
+      const targetUser = users.find(u => u.id_usuario === userId);
+      if (!targetUser) return;
+      const updatedUser = { ...targetUser, rol: newRole };
+      
+      await saveUsuarioToFirestore(updatedUser);
+      setUsers(prev => prev.map(u => u.id_usuario === userId ? updatedUser : u));
+
+      if (currentUser && currentUser.id_usuario === userId) {
+        setCurrentUser(updatedUser);
+        localStorage.setItem('purifi_active_user', JSON.stringify(updatedUser));
+      }
+
+      await addAuditLog({
+        funcionario_nombre: currentUser ? currentUser.nombre_usuario : 'Administrador',
+        funcionario_rol: 'Administración Central',
+        modulo: 'Usuarios',
+        accion: 'ACTUALIZAR_ROL',
+        descripcion: `Actualizó el rol de ${targetUser.nombre_usuario} a "${newRole}"`,
+        id_referencia: userId,
+        detalles_anteriores: `Rol previo: ${targetUser.rol}`,
+        detalles_nuevos: `Rol nuevo: ${newRole}`
+      });
+    } catch (err) {
+      console.error('Error al actualizar rol de usuario:', err);
     }
   };
 
@@ -959,6 +1031,8 @@ export default function App() {
                 onDeleteNotice={handleDeleteNotice}
                 onOpenDdl={() => setShowDdlModal(true)}
                 onSendBroadcastNotification={handleSendBroadcastNotification}
+                onRefreshAll={loadAllData}
+                onUpdateUserRole={handleUpdateUserRole}
               />
             ) : (
               <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 text-center max-w-lg mx-auto space-y-4 shadow-sm my-10">
