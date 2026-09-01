@@ -658,6 +658,7 @@ export default function App() {
               onExploreEvents={() => setActiveTab('calendario')}
               onExploreNotices={() => setActiveTab('avisos')}
               onExploreOperations={() => setActiveTab('operaciones')}
+              onExploreTurismo={() => setActiveTab('turismo')}
               onOpenEmergencies={() => setShowEmergenciesModal(true)}
               onOpenAssistant={() => setShowAssistantModal(true)}
               onOpenServicesGuide={() => setShowServicesGuideModal(true)}
