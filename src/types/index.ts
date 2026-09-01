@@ -317,6 +317,9 @@ export interface CreateEventoDTO {
   id_organizador: number;
   info_adicional?: string;
   destacado?: boolean;
+  imagen_url?: string;
+  cupo_maximo?: number;
+  requiere_inscripcion?: boolean;
 }
 
 export interface CreateAvisoDTO {

@@ -16,6 +16,13 @@ import {
   INITIAL_ORGANIZERS, 
   INITIAL_USERS 
 } from '../data/initialData';
+import { 
+  saveEventoToFirestore, 
+  deleteEventoFromFirestore,
+  saveAvisoToFirestore,
+  deleteAvisoFromFirestore 
+} from './firebaseOpsAdapter';
+import { triggerLocalPush } from '../utils/notificationUtils';
 
 export class ApiClientAdapter {
   private static async request<T>(endpoint: string, options?: RequestInit, fallbackData?: T): Promise<T> {
@@ -98,24 +105,87 @@ export class ApiClientAdapter {
       id_organizador: dto.id_organizador || 1,
       estado: 'programado',
       info_adicional: dto.info_adicional,
-      destacado: dto.destacado || false
+      destacado: dto.destacado || false,
+      imagen_url: dto.imagen_url,
+      cupo_maximo: dto.cupo_maximo,
+      requiere_inscripcion: dto.requiere_inscripcion
     };
-    return this.request<Evento>('/api/events', {
-      method: 'POST',
-      body: JSON.stringify(dto),
-    }, fallbackEvent);
+
+    let resultEvent = fallbackEvent;
+    try {
+      resultEvent = await this.request<Evento>('/api/events', {
+        method: 'POST',
+        body: JSON.stringify(dto),
+      }, fallbackEvent);
+    } catch (e) {
+      console.warn('API createEvent fallback to local:', e);
+    }
+
+    // Real-time synchronization to Firebase Firestore
+    try {
+      await saveEventoToFirestore(resultEvent);
+    } catch (fsErr) {
+      console.error('Firestore saveEvento error:', fsErr);
+    }
+
+    // Trigger local push notification & broadcast
+    try {
+      triggerLocalPush(
+        `Nuevo Evento: ${resultEvent.nombre}`,
+        `📅 ${resultEvent.fecha} a las ${resultEvent.hora_inicio} en ${resultEvent.lugar}. ¡Toca para ver detalles!`,
+        `event-${resultEvent.id_evento}`
+      );
+      this.broadcastNotification({
+        titulo: `Nuevo Evento: ${resultEvent.nombre}`,
+        mensaje: `Se ha publicado un nuevo evento para el ${resultEvent.fecha} en ${resultEvent.lugar}.`,
+        tipo_ref: 'evento',
+        id_ref: resultEvent.id_evento
+      }).catch(() => {});
+    } catch {}
+
+    return resultEvent;
   }
 
   static async updateEvent(id: number, dto: Partial<CreateEventoDTO>): Promise<Evento> {
     const existing = INITIAL_EVENTS.find(e => e.id_evento === id) || INITIAL_EVENTS[0];
     const fallbackUpdated: Evento = { ...existing, ...dto };
-    return this.request<Evento>(`/api/events/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(dto),
-    }, fallbackUpdated);
+
+    let resultEvent = fallbackUpdated;
+    try {
+      resultEvent = await this.request<Evento>(`/api/events/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(dto),
+      }, fallbackUpdated);
+    } catch (e) {
+      console.warn('API updateEvent fallback to local:', e);
+    }
+
+    // Sync to Firestore
+    try {
+      await saveEventoToFirestore(resultEvent);
+    } catch (fsErr) {
+      console.error('Firestore updateEvento error:', fsErr);
+    }
+
+    // Notification on event update
+    try {
+      triggerLocalPush(
+        `Evento Actualizado: ${resultEvent.nombre}`,
+        `Se han actualizado detalles del evento programado para ${resultEvent.fecha}.`,
+        `event-update-${resultEvent.id_evento}`
+      );
+    } catch {}
+
+    return resultEvent;
   }
 
   static async deleteEvent(id: number): Promise<{ success: boolean }> {
+    try {
+      await deleteEventoFromFirestore(id);
+    } catch (e) {
+      console.warn('Firestore deleteEvento error:', e);
+    }
+
     return this.request<{ success: boolean }>(`/api/events/${id}`, {
       method: 'DELETE',
     }, { success: true });
@@ -138,13 +208,41 @@ export class ApiClientAdapter {
       urgente: dto.urgente,
       id_usuario_creador: idUsuarioCreador
     };
-    return this.request<Aviso>('/api/notices', {
-      method: 'POST',
-      body: JSON.stringify({ ...dto, id_usuario_creador: idUsuarioCreador }),
-    }, fallbackNotice);
+
+    let resultNotice = fallbackNotice;
+    try {
+      resultNotice = await this.request<Aviso>('/api/notices', {
+        method: 'POST',
+        body: JSON.stringify({ ...dto, id_usuario_creador: idUsuarioCreador }),
+      }, fallbackNotice);
+    } catch (e) {
+      console.warn('API createNotice fallback:', e);
+    }
+
+    try {
+      await saveAvisoToFirestore(resultNotice);
+    } catch (fsErr) {
+      console.error('Firestore saveAviso error:', fsErr);
+    }
+
+    if (resultNotice.urgente) {
+      triggerLocalPush(
+        `🚨 AVISO URGENTE: ${resultNotice.titulo}`,
+        `${resultNotice.sector_afectado}: ${resultNotice.descripcion}`,
+        `aviso-${resultNotice.id_aviso}`
+      );
+    }
+
+    return resultNotice;
   }
 
   static async deleteNotice(id: number): Promise<{ success: boolean }> {
+    try {
+      await deleteAvisoFromFirestore(id);
+    } catch (e) {
+      console.warn('Firestore deleteAviso error:', e);
+    }
+
     return this.request<{ success: boolean }>(`/api/notices/${id}`, {
       method: 'DELETE',
     }, { success: true });
@@ -315,6 +413,44 @@ export class ApiClientAdapter {
       method: 'PUT',
       body: JSON.stringify({ preferences }),
     }, updated);
+  }
+
+  static async updateUser(userId: number, data: Partial<Usuario>): Promise<Usuario> {
+    const user = INITIAL_USERS.find(u => u.id_usuario === userId) || INITIAL_USERS[0];
+    const updated: Usuario = { ...user, ...data };
+    return this.request<Usuario>(`/api/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }, updated);
+  }
+
+  // Password Recovery Methods
+  static async requestPasswordReset(email: string): Promise<{ success: boolean; message: string; token?: string; demoLink?: string }> {
+    const cleanEmail = email.trim().toLowerCase();
+    const existing = INITIAL_USERS.find(u => u.correo.toLowerCase() === cleanEmail);
+    const mockToken = `PURIFI-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    return this.request<{ success: boolean; message: string; token?: string; demoLink?: string }>('/api/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email: cleanEmail }),
+    }, {
+      success: true,
+      message: `Código de recuperación generado para ${cleanEmail}.`,
+      token: mockToken,
+      demoLink: `/recuperar?token=${mockToken}`
+    });
+  }
+
+  static async resetPassword(token: string, newPassword: string): Promise<{ success: boolean; message: string; user?: Usuario }> {
+    const fallbackUser = INITIAL_USERS[0];
+    return this.request<{ success: boolean; message: string; user?: Usuario }>('/api/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token: token.trim().toUpperCase(), newPassword }),
+    }, {
+      success: true,
+      message: 'Contraseña actualizada con éxito.',
+      user: { ...fallbackUser, contrasena: newPassword }
+    });
   }
 
   // Organizers

@@ -250,6 +250,58 @@ export function setupApiRoutes(app: Express) {
     });
   });
 
+  // Password Recovery Endpoints
+  app.post('/api/auth/forgot-password', (req: Request, res: Response) => {
+    const { email } = req.body;
+    if (!email) {
+      res.status(400).json({ error: 'Debes ingresar tu correo electrónico registrado.' });
+      return;
+    }
+
+    const result = dbInstance.createPasswordResetToken(email);
+    if (!result) {
+      // Return 200 with standard message for security or helpful testing
+      res.json({
+        success: true,
+        message: 'Si el correo está registrado en Purificación, se ha generado el enlace de restablecimiento.',
+        token: undefined
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      message: `Código de recuperación generado exitosamente para ${email}.`,
+      token: result.token,
+      demoLink: `/recuperar?token=${result.token}`
+    });
+  });
+
+  app.post('/api/auth/reset-password', (req: Request, res: Response) => {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) {
+      res.status(400).json({ error: 'Se requiere el código/token y la nueva contraseña.' });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres.' });
+      return;
+    }
+
+    const resetResult = dbInstance.resetPasswordWithToken(token, newPassword);
+    if (!resetResult.success) {
+      res.status(400).json({ error: resetResult.message });
+      return;
+    }
+
+    res.json({
+      success: true,
+      message: resetResult.message,
+      user: resetResult.user
+    });
+  });
+
   app.post('/api/users', (req: Request, res: Response) => {
     const { correo } = req.body;
     const existing = dbInstance.getUserByEmail(correo);
@@ -260,6 +312,15 @@ export function setupApiRoutes(app: Express) {
     }
     const newUser = dbInstance.createUser(req.body);
     res.status(201).json(newUser);
+  });
+
+  app.put('/api/users/:id', (req: Request, res: Response) => {
+    const updated = dbInstance.updateUser(Number(req.params.id), req.body);
+    if (!updated) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+    res.json(updated);
   });
 
   app.put('/api/users/:id/preferences', (req: Request, res: Response) => {

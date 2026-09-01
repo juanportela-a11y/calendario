@@ -274,6 +274,71 @@ export class DatabaseService {
     return safeUser as Usuario;
   }
 
+  updateUser(idUsuario: number, data: Partial<Usuario>): Usuario | undefined {
+    const user = this.users.find(u => u.id_usuario === idUsuario);
+    if (!user) return undefined;
+
+    if (data.nombre_usuario) user.nombre_usuario = data.nombre_usuario.trim();
+    if (data.telefono) user.telefono = data.telefono.replace(/\D/g, '').slice(0, 10);
+    if (data.barrio) user.barrio = data.barrio.trim();
+    if (data.preferencias_categorias) user.preferencias_categorias = data.preferencias_categorias;
+    if (data.puntos_civicos !== undefined) user.puntos_civicos = data.puntos_civicos;
+    if (data.contrasena) user.contrasena = data.contrasena;
+
+    const { contrasena, ...safeUser } = user;
+    return safeUser as Usuario;
+  }
+
+  // Tokens storage for password recovery
+  private resetTokens: Map<string, { userId: number; email: string; expiresAt: number }> = new Map();
+
+  createPasswordResetToken(email: string): { token: string; user: Usuario } | null {
+    const user = this.getUserByEmail(email);
+    if (!user) return null;
+
+    // Generate readable code / token (e.g. PURIFI-XXXXXX)
+    const randomCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const token = `PURIFI-${randomCode}`;
+    const expiresAt = Date.now() + 60 * 60 * 1000; // 1 hour
+
+    this.resetTokens.set(token, { userId: user.id_usuario, email: user.correo, expiresAt });
+
+    return { token, user };
+  }
+
+  resetPasswordWithToken(token: string, newPassword: string): { success: boolean; message: string; user?: Usuario } {
+    const tokenData = this.resetTokens.get(token.trim().toUpperCase());
+    if (!tokenData) {
+      return { success: false, message: 'El código o token de recuperación no es válido o ya fue utilizado.' };
+    }
+
+    if (Date.now() > tokenData.expiresAt) {
+      this.resetTokens.delete(token.trim().toUpperCase());
+      return { success: false, message: 'El código de recuperación ha expirado. Por favor solicita uno nuevo.' };
+    }
+
+    const user = this.users.find(u => u.id_usuario === tokenData.userId);
+    if (!user) {
+      return { success: false, message: 'Usuario no encontrado.' };
+    }
+
+    // Update password
+    user.contrasena = newPassword;
+    this.resetTokens.delete(token.trim().toUpperCase());
+
+    // Create notification
+    this.createNotification({
+      id_usuario: user.id_usuario,
+      titulo: 'Contraseña Actualizada',
+      mensaje: 'Tu contraseña de acceso a PurifiCalendario ha sido restablecida exitosamente.',
+      tipo_ref: 'sistema',
+      id_ref: null
+    });
+
+    const { contrasena, ...safeUser } = user;
+    return { success: true, message: 'Contraseña actualizada con éxito.', user: safeUser as Usuario };
+  }
+
   updateUserPreferences(idUsuario: number, preferences: string[]): Usuario | undefined {
     const user = this.users.find(u => u.id_usuario === idUsuario);
     if (!user) return undefined;
