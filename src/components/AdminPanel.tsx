@@ -75,12 +75,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [opcion2, setOpcion2] = useState('');
   const [opcion3, setOpcion3] = useState('');
   const [categoriaEncuesta, setCategoriaEncuesta] = useState<'obras' | 'salud' | 'cultura' | 'servicios'>('obras');
+  const [auditModuloFilter, setAuditModuloFilter] = useState<string>('todos');
 
   const { 
     vias, 
     cortes, 
     jornadas, 
     auditLogs, 
+    lastAuditSyncTime,
+    isFirebaseSynced,
     updateViaCuadrilla, 
     deleteReporteVia,
     notifiedUsers, 
@@ -547,61 +550,121 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
         {/* TAB 2: AUDITORIA Y HISTORIAL DE MODIFICACIONES */}
         {activeTab === 'auditoria' && (
-          <div className="overflow-x-auto">
-            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between border-b border-slate-200 dark:border-slate-800">
+          <div>
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800">
               <div>
-                <p className="font-bold text-slate-900 dark:text-white text-xs">Pista de Auditoría Oficial e Inmutable</p>
-                <p className="text-[11px] text-slate-500">Registro con marca temporal de cada cambio de estado, asignación y reporte</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-bold text-slate-900 dark:text-white text-xs">Pista de Auditoría Oficial e Inmutable</p>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    En tiempo real {lastAuditSyncTime ? `(${lastAuditSyncTime})` : ''}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500">Registro histórico sincronizado permanentemente con Firestore y almacenamiento seguro</p>
               </div>
-              <button
-                onClick={() => exportAuditLogsToCSV(auditLogs)}
-                className="px-3 py-1.5 rounded-xl bg-[#0D47A1] text-white text-xs font-bold hover:bg-blue-800 flex items-center gap-1.5"
-              >
-                <FileSpreadsheet className="w-3.5 h-3.5" />
-                <span>Exportar Bitácora CSV</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => exportAuditLogsToCSV(auditLogs)}
+                  className="px-3 py-1.5 rounded-xl bg-[#0D47A1] text-white text-xs font-bold hover:bg-blue-800 flex items-center gap-1.5 shadow-sm transition-all"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  <span>Exportar Bitácora CSV</span>
+                </button>
+              </div>
             </div>
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-extrabold uppercase border-b border-slate-200 dark:border-slate-800">
-                  <th className="p-4">Fecha y Hora</th>
-                  <th className="p-4">Funcionario / Usuario</th>
-                  <th className="p-4">Módulo</th>
-                  <th className="p-4">Acción</th>
-                  <th className="p-4">Detalle del Cambio</th>
-                  <th className="p-4">Ref</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {auditLogs
-                  .filter(l => l.descripcion.toLowerCase().includes(search.toLowerCase()) || l.funcionario_nombre.toLowerCase().includes(search.toLowerCase()))
-                  .map((log) => (
-                    <tr key={log.id_log} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                      <td className="p-4 font-mono text-[11px] text-slate-600 dark:text-slate-300">
-                        {log.timestamp}
-                      </td>
-                      <td className="p-4">
-                        <div className="font-bold text-slate-900 dark:text-white">{log.funcionario_nombre}</div>
-                        <div className="text-[10px] text-slate-500">{log.funcionario_rol}</div>
-                      </td>
-                      <td className="p-4">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300">
-                          {log.modulo}
-                        </span>
-                      </td>
-                      <td className="p-4 font-bold text-slate-800 dark:text-slate-200">
-                        {log.accion.replace('_', ' ')}
-                      </td>
-                      <td className="p-4 text-slate-600 dark:text-slate-300 max-w-xs">
-                        {log.descripcion}
-                      </td>
-                      <td className="p-4 text-[11px] font-mono text-slate-400">
-                        {log.id_referencia ? `#${log.id_referencia}` : '-'}
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+
+            {/* Filter Pills */}
+            <div className="p-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] font-bold text-slate-400 mr-1">Filtrar Módulo:</span>
+              {['todos', 'Vías', 'Eventos', 'Avisos', 'Usuarios', 'Cortes', 'Salud & Esterilización', 'Notificaciones', 'Ciudadanía'].map((mod) => (
+                <button
+                  key={mod}
+                  onClick={() => setAuditModuloFilter(mod)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                    auditModuloFilter === mod
+                      ? 'bg-[#0D47A1] text-white shadow-xs'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  {mod === 'todos' ? 'Todos los Módulos' : mod}
+                </button>
+              ))}
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-extrabold uppercase border-b border-slate-200 dark:border-slate-800">
+                    <th className="p-4">Fecha y Hora</th>
+                    <th className="p-4">Funcionario / Usuario</th>
+                    <th className="p-4">Módulo</th>
+                    <th className="p-4">Acción</th>
+                    <th className="p-4">Detalle del Cambio</th>
+                    <th className="p-4">Ref</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {auditLogs
+                    .filter(l => {
+                      const matchesSearch = l.descripcion.toLowerCase().includes(search.toLowerCase()) || 
+                                           l.funcionario_nombre.toLowerCase().includes(search.toLowerCase()) ||
+                                           l.accion.toLowerCase().includes(search.toLowerCase()) ||
+                                           (l.id_referencia && String(l.id_referencia).includes(search));
+                      const matchesModulo = auditModuloFilter === 'todos' || l.modulo === auditModuloFilter;
+                      return matchesSearch && matchesModulo;
+                    })
+                    .map((log) => {
+                      const getModuloBadge = (modulo: string) => {
+                        switch (modulo) {
+                          case 'Vías': return 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800';
+                          case 'Eventos': return 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-800';
+                          case 'Avisos': return 'bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-800';
+                          case 'Usuarios': return 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800';
+                          case 'Cortes': return 'bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 border-sky-200 dark:border-sky-800';
+                          case 'Salud & Esterilización': return 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800';
+                          case 'Notificaciones': return 'bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800';
+                          case 'Ciudadanía': return 'bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border-teal-200 dark:border-teal-800';
+                          default: return 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700';
+                        }
+                      };
+
+                      return (
+                        <tr key={log.id_log} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                          <td className="p-4 font-mono text-[11px] text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                            {log.timestamp}
+                          </td>
+                          <td className="p-4">
+                            <div className="font-bold text-slate-900 dark:text-white">{log.funcionario_nombre}</div>
+                            <div className="text-[10px] text-slate-500">{log.funcionario_rol}</div>
+                          </td>
+                          <td className="p-4">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${getModuloBadge(log.modulo)}`}>
+                              {log.modulo}
+                            </span>
+                          </td>
+                          <td className="p-4 font-bold text-slate-800 dark:text-slate-200">
+                            <span className="font-mono text-[11px]">{log.accion.replace(/_/g, ' ')}</span>
+                          </td>
+                          <td className="p-4 text-slate-600 dark:text-slate-300 max-w-sm">
+                            <p>{log.descripcion}</p>
+                            {log.detalles_nuevos && (
+                              <p className="text-[10px] text-slate-400 mt-0.5 font-mono">{log.detalles_nuevos}</p>
+                            )}
+                          </td>
+                          <td className="p-4 text-[11px] font-mono text-slate-400 whitespace-nowrap">
+                            {log.id_referencia ? `#${log.id_referencia}` : '-'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+              {auditLogs.length === 0 && (
+                <div className="p-8 text-center text-slate-400 text-xs">
+                  No hay registros de auditoría almacenados actualmente.
+                </div>
+              )}
+            </div>
           </div>
         )}
 

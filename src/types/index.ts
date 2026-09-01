@@ -243,10 +243,28 @@ export interface EncuestaCiudadana {
 }
 
 // Panel de Bitácora y Auditoría
-export type ModuloAuditoria = 'Vías' | 'Cortes' | 'Salud & Esterilización' | 'Mapa' | 'Sistema' | 'Ciudadanía';
+export type ModuloAuditoria = 
+  | 'Vías' 
+  | 'Cortes' 
+  | 'Salud & Esterilización' 
+  | 'Eventos'
+  | 'Avisos'
+  | 'Usuarios'
+  | 'Notificaciones'
+  | 'Mapa' 
+  | 'Sistema' 
+  | 'Ciudadanía';
+
 export type AccionAuditoria = 
   | 'CREACIÓN' 
+  | 'ACTUALIZACIÓN'
   | 'ACTUALIZACIÓN_ESTADO' 
+  | 'ELIMINACIÓN'
+  | 'INICIO_SESIÓN'
+  | 'REGISTRO_USUARIO'
+  | 'ACTUALIZACIÓN_PREFERENCIAS'
+  | 'BROADCAST_NOTIFICACIÓN'
+  | 'GUARDAR_EVENTO'
   | 'ADJUNCIÓN_FOTO' 
   | 'ASIGNACIÓN_PERSONAL' 
   | 'ASIGNACIÓN_CUADRILLA'

@@ -194,9 +194,26 @@ export default function App() {
   };
 
   // Ops Store Integration
-  const { markNoticeAsReadByCitizen, notifiedUsers, vias, cortes, jornadas } = useOpsStore();
+  const { 
+    markNoticeAsReadByCitizen, 
+    notifiedUsers, 
+    vias, 
+    cortes, 
+    jornadas, 
+    auditLogs,
+    initFirestoreSync,
+    addAuditLog 
+  } = useOpsStore();
 
   const urgentNotice = notices.find(n => n.urgente) || null;
+
+  // Real-time Firestore synchronization active at the root level of the application
+  useEffect(() => {
+    const cleanupSync = initFirestoreSync();
+    return () => {
+      if (cleanupSync) cleanupSync();
+    };
+  }, []);
 
   // Load initial data from backend API & Sync Offline
   const loadAllData = async () => {
@@ -216,8 +233,8 @@ export default function App() {
       setUsers(usrs);
       setOrganizers(orgs);
 
-      // Persist latest datasets to Offline Storage
-      OfflineStorageManager.syncAllToOffline(nts, evts, vias, cortes, jornadas);
+      // Persist latest datasets to Offline Storage including audit logs
+      OfflineStorageManager.syncAllToOffline(nts, evts, vias, cortes, jornadas, auditLogs);
 
       // Load user specific data
       if (currentUser && currentUser.id_usuario) {
@@ -264,9 +281,22 @@ export default function App() {
       return;
     }
     try {
+      const isAlreadySaved = savedEventIds.includes(idEvento);
       await ApiClientAdapter.toggleSaveEvent(currentUser.id_usuario, idEvento);
       const updatedSaved = await ApiClientAdapter.getSavedEvents(currentUser.id_usuario);
       setSavedEvents(updatedSaved);
+
+      const targetEv = events.find(e => e.id_evento === idEvento);
+      await addAuditLog({
+        funcionario_nombre: currentUser.nombre_usuario,
+        funcionario_rol: 'Ciudadano / Usuario',
+        modulo: 'Eventos',
+        accion: 'GUARDAR_EVENTO',
+        descripcion: isAlreadySaved 
+          ? `Removió evento #${idEvento}${targetEv ? ` "${targetEv.nombre}"` : ''} de sus eventos guardados`
+          : `Guardó evento #${idEvento}${targetEv ? ` "${targetEv.nombre}"` : ''} en su agenda personal`,
+        id_referencia: idEvento
+      });
     } catch (err) {
       console.error('Error al guardar evento:', err);
     }
@@ -278,6 +308,16 @@ export default function App() {
       const updatedUser = await ApiClientAdapter.updateUserPreferences(currentUser.id_usuario, preferences);
       setCurrentUser(updatedUser);
       localStorage.setItem('purifi_active_user', JSON.stringify(updatedUser));
+
+      await addAuditLog({
+        funcionario_nombre: currentUser.nombre_usuario,
+        funcionario_rol: currentUser.rol || 'Ciudadano',
+        modulo: 'Usuarios',
+        accion: 'ACTUALIZACIÓN_PREFERENCIAS',
+        descripcion: `Actualizó sus categorías de interés (${preferences.length} categorías seleccionadas)`,
+        id_referencia: currentUser.id_usuario,
+        detalles_nuevos: preferences.join(', ')
+      });
     } catch (err) {
       console.error('Error actualizando preferencias:', err);
     }
@@ -290,31 +330,76 @@ export default function App() {
       if (myOrg) orgId = myOrg.id_organizador;
     }
 
-    await ApiClientAdapter.createEvent({ ...dto, id_organizador: orgId });
+    const created = await ApiClientAdapter.createEvent({ ...dto, id_organizador: orgId });
+    await addAuditLog({
+      funcionario_nombre: currentUser ? currentUser.nombre_usuario : 'Organizador Comunitario',
+      funcionario_rol: currentUser ? (currentUser.rol === 'administrador' ? 'Alcaldía / Administrador' : 'Organizador') : 'Organizador Comunitario',
+      modulo: 'Eventos',
+      accion: 'CREACIÓN',
+      descripcion: `Creó el evento "${dto.nombre}" programado para el ${dto.fecha} en ${dto.lugar}`,
+      id_referencia: created ? (created as any).id_evento : undefined,
+      detalles_nuevos: `Fecha: ${dto.fecha} ${dto.hora_inicio} | Categoría ID: ${dto.id_categoria}`
+    });
     await loadAllData();
   };
 
   const handleUpdateEvent = async (id: number, dto: Partial<CreateEventoDTO>) => {
     await ApiClientAdapter.updateEvent(id, dto);
+    await addAuditLog({
+      funcionario_nombre: currentUser ? currentUser.nombre_usuario : 'Administrador',
+      funcionario_rol: 'Gestor Municipal de Eventos',
+      modulo: 'Eventos',
+      accion: 'ACTUALIZACIÓN',
+      descripcion: `Actualizó datos del evento #${id}${dto.nombre ? `: "${dto.nombre}"` : ''}`,
+      id_referencia: id,
+      detalles_nuevos: JSON.stringify(dto)
+    });
     await loadAllData();
   };
 
   const handleDeleteEvent = async (id: number) => {
     if (window.confirm('¿Está seguro de eliminar este evento?')) {
+      const ev = events.find(e => e.id_evento === id);
       await ApiClientAdapter.deleteEvent(id);
+      await addAuditLog({
+        funcionario_nombre: currentUser ? currentUser.nombre_usuario : 'Administrador',
+        funcionario_rol: 'Administración Municipal',
+        modulo: 'Eventos',
+        accion: 'ELIMINACIÓN',
+        descripcion: `Eliminó el evento #${id}${ev ? `: "${ev.nombre}"` : ''}`,
+        id_referencia: id
+      });
       await loadAllData();
     }
   };
 
   const handleCreateNotice = async (dto: CreateAvisoDTO) => {
     if (!currentUser) return;
-    await ApiClientAdapter.createNotice(dto, currentUser.id_usuario);
+    const created = await ApiClientAdapter.createNotice(dto, currentUser.id_usuario);
+    await addAuditLog({
+      funcionario_nombre: currentUser.nombre_usuario,
+      funcionario_rol: currentUser.rol === 'administrador' ? 'Alcaldía Municipal' : 'Funcionario',
+      modulo: 'Avisos',
+      accion: 'CREACIÓN',
+      descripcion: `Publicó aviso oficial: "${dto.titulo}" [${dto.urgente ? 'URGENTE' : 'Informativo'}]`,
+      id_referencia: created ? (created as any).id_aviso : undefined,
+      detalles_nuevos: `Sector: ${dto.sector_afectado || 'General'}`
+    });
     await loadAllData();
   };
 
   const handleDeleteNotice = async (id: number) => {
     if (window.confirm('¿Está seguro de eliminar este aviso?')) {
+      const notice = notices.find(n => n.id_aviso === id);
       await ApiClientAdapter.deleteNotice(id);
+      await addAuditLog({
+        funcionario_nombre: currentUser ? currentUser.nombre_usuario : 'Administrador',
+        funcionario_rol: 'Administración Municipal',
+        modulo: 'Avisos',
+        accion: 'ELIMINACIÓN',
+        descripcion: `Retiró el aviso oficial #${id}${notice ? `: "${notice.titulo}"` : ''}`,
+        id_referencia: id
+      });
       await loadAllData();
     }
   };
@@ -339,6 +424,14 @@ export default function App() {
       mensaje,
       tipo_ref: tipo
     });
+    await addAuditLog({
+      funcionario_nombre: currentUser ? currentUser.nombre_usuario : 'Central de Comunicaciones',
+      funcionario_rol: 'Prensa & Difusión Municipal',
+      modulo: 'Notificaciones',
+      accion: 'BROADCAST_NOTIFICACIÓN',
+      descripcion: `Difundió notificación masiva a la comunidad: "${titulo}"`,
+      detalles_nuevos: `Mensaje: ${mensaje.slice(0, 100)}...`
+    });
     if (currentUser && currentUser.id_usuario) {
       const userNotifs = await ApiClientAdapter.getNotifications(currentUser.id_usuario);
       setNotifications(userNotifs);
@@ -352,6 +445,16 @@ export default function App() {
         setCurrentUser(res.user);
         localStorage.setItem('purifi_active_user', JSON.stringify(res.user));
         setShowAuthModal(false);
+
+        await addAuditLog({
+          funcionario_nombre: res.user.nombre_usuario,
+          funcionario_rol: res.user.rol || 'Ciudadano',
+          modulo: 'Usuarios',
+          accion: 'INICIO_SESIÓN',
+          descripcion: `Inició sesión en el portal municipal (${res.user.correo})`,
+          id_referencia: res.user.id_usuario
+        });
+
         await loadAllData();
         return { success: true };
       }
@@ -368,6 +471,16 @@ export default function App() {
         setCurrentUser(res.user);
         localStorage.setItem('purifi_active_user', JSON.stringify(res.user));
         setShowAuthModal(false);
+
+        await addAuditLog({
+          funcionario_nombre: res.user.nombre_usuario,
+          funcionario_rol: res.user.rol || 'Ciudadano Registrado',
+          modulo: 'Usuarios',
+          accion: 'REGISTRO_USUARIO',
+          descripcion: `Nuevo usuario registrado: ${res.user.nombre_usuario} (${res.user.correo}) - Barrio: ${res.user.barrio || 'No especificado'}`,
+          id_referencia: res.user.id_usuario
+        });
+
         await loadAllData();
         return { success: true };
       }
@@ -384,6 +497,16 @@ export default function App() {
         setCurrentUser(res.user);
         localStorage.setItem('purifi_active_user', JSON.stringify(res.user));
         setShowAuthModal(false);
+
+        await addAuditLog({
+          funcionario_nombre: res.user.nombre_usuario,
+          funcionario_rol: res.user.rol || 'Ciudadano (Google)',
+          modulo: 'Usuarios',
+          accion: 'INICIO_SESIÓN',
+          descripcion: `Autenticación con Google exitosa: ${res.user.correo}`,
+          id_referencia: res.user.id_usuario
+        });
+
         await loadAllData();
         return { success: true };
       }

@@ -33,6 +33,7 @@ import {
   subscribeToAuditLogs,
   saveAuditLogToFirestore
 } from '../adapters/firebaseOpsAdapter';
+import { OfflineStorageManager, STORAGE_KEYS } from '../utils/offlineStorage';
 
 interface OpsState {
   vias: ReporteVia[];
@@ -43,6 +44,7 @@ interface OpsState {
   rutasDesvios: RutaDesvio[];
   isFirebaseSynced: boolean;
   isLoading: boolean;
+  lastAuditSyncTime: string;
   activeTab: 'vias' | 'cortes' | 'salud' | 'participacion' | 'rio';
   layersVisibility: MapLayersVisibility;
   filters: OpsGlobalFilterState;
@@ -60,6 +62,7 @@ interface OpsState {
   showToast: (msg: string) => void;
   setSelectedDesvio: (desvio: RutaDesvio | null) => void;
   initFirestoreSync: () => () => void;
+  addAuditLog: (log: Omit<RegistroAuditoria, 'id_log' | 'timestamp'> & { timestamp?: string; id_log?: number }) => Promise<void>;
   addUserPoints: (pts: number, motivo: string) => void;
   markNoticeAsReadByCitizen: (avisoTitulo: string, userName: string) => void;
   addReportComment: (idVia: number, autor: string, texto: string, rol?: string) => void;
@@ -93,11 +96,12 @@ export const useOpsStore = create<OpsState>((set, get) => ({
   vias: INITIAL_VIAS,
   cortes: INITIAL_CORTES,
   jornadas: INITIAL_JORNADAS_SALUD,
-  auditLogs: INITIAL_AUDIT_LOGS,
+  auditLogs: OfflineStorageManager.getCache(STORAGE_KEYS.AUDIT_LOGS, INITIAL_AUDIT_LOGS),
   encuestas: INITIAL_ENCUESTAS,
   rutasDesvios: RUTAS_DESVIOS_SUGERIDOS,
   isFirebaseSynced: false,
   isLoading: true,
+  lastAuditSyncTime: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
   activeTab: 'vias',
   layersVisibility: {
     vias: true,
@@ -324,19 +328,25 @@ export const useOpsStore = create<OpsState>((set, get) => ({
         await seedInitialOpsDataIfEmpty();
 
         const unsubVias = subscribeToVias((vias) => {
-          if (vias.length > 0) set({ vias });
+          if (vias && vias.length > 0) set({ vias });
         });
 
         const unsubCortes = subscribeToCortes((cortes) => {
-          if (cortes.length > 0) set({ cortes });
+          if (cortes && cortes.length > 0) set({ cortes });
         });
 
         const unsubJornadas = subscribeToJornadas((jornadas) => {
-          if (jornadas.length > 0) set({ jornadas });
+          if (jornadas && jornadas.length > 0) set({ jornadas });
         });
 
-        const unsubLogs = subscribeToAuditLogs((auditLogs) => {
-          if (auditLogs.length > 0) set({ auditLogs });
+        const unsubLogs = subscribeToAuditLogs((incomingLogs) => {
+          if (incomingLogs && incomingLogs.length > 0) {
+            // Sort by newest first
+            const sorted = [...incomingLogs].sort((a, b) => b.id_log - a.id_log);
+            const nowTime = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            set({ auditLogs: sorted, lastAuditSyncTime: nowTime });
+            OfflineStorageManager.saveCache(STORAGE_KEYS.AUDIT_LOGS, sorted);
+          }
         });
 
         unsubs = [unsubVias, unsubCortes, unsubJornadas, unsubLogs];
@@ -352,6 +362,38 @@ export const useOpsStore = create<OpsState>((set, get) => ({
     return () => {
       unsubs.forEach(unsub => unsub && unsub());
     };
+  },
+
+  addAuditLog: async (logInput) => {
+    const { auditLogs } = get();
+    const now = new Date();
+    const logId = logInput.id_log || Date.now();
+    const formattedTimestamp = logInput.timestamp || `${now.toISOString().split('T')[0]} ${now.toTimeString().slice(0, 5)}`;
+    
+    const newLog: RegistroAuditoria = {
+      id_log: logId,
+      timestamp: formattedTimestamp,
+      funcionario_nombre: logInput.funcionario_nombre,
+      funcionario_rol: logInput.funcionario_rol,
+      funcionario_avatar: logInput.funcionario_avatar,
+      modulo: logInput.modulo,
+      accion: logInput.accion,
+      descripcion: logInput.descripcion,
+      id_referencia: logInput.id_referencia,
+      detalles_anteriores: logInput.detalles_anteriores,
+      detalles_nuevos: logInput.detalles_nuevos
+    };
+
+    const updated = [newLog, ...auditLogs.filter(l => l.id_log !== logId)];
+    const nowTime = now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    set({ auditLogs: updated, lastAuditSyncTime: nowTime });
+    OfflineStorageManager.saveCache(STORAGE_KEYS.AUDIT_LOGS, updated);
+
+    try {
+      await saveAuditLogToFirestore(newLog);
+    } catch (err) {
+      console.warn('Could not save audit log directly to Firestore (saved offline):', err);
+    }
   },
 
   addVia: async (viaData) => {
@@ -774,7 +816,11 @@ export const useOpsStore = create<OpsState>((set, get) => ({
       id_referencia: idEncuesta
     };
 
-    set((s) => ({ auditLogs: [log, ...s.auditLogs] }));
+    set((s) => ({ 
+      auditLogs: [log, ...s.auditLogs],
+      lastAuditSyncTime: now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    }));
+    await saveAuditLogToFirestore(log);
     showToast('✓ ¡Voto registrado con éxito! Gracias por participar.');
   }
 }));

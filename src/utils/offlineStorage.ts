@@ -13,6 +13,7 @@ export const STORAGE_KEYS = {
   VIAS: 'purifi_offline_vias',
   CORTES: 'purifi_offline_cortes',
   JORNADAS: 'purifi_offline_jornadas',
+  AUDIT_LOGS: 'purifi_offline_audit_logs',
   QUEUE: 'purifi_offline_queue',
   LAST_SYNC: 'purifi_offline_last_sync'
 };
@@ -83,12 +84,13 @@ export class OfflineStorageManager {
   }
 
   // Backup all municipal datasets to offline storage
-  static syncAllToOffline(notices: any[], events: any[], vias: any[], cortes: any[], jornadas: any[]): void {
-    if (notices.length > 0) this.saveCache(STORAGE_KEYS.NOTICES, notices);
-    if (events.length > 0) this.saveCache(STORAGE_KEYS.EVENTS, events);
-    if (vias.length > 0) this.saveCache(STORAGE_KEYS.VIAS, vias);
-    if (cortes.length > 0) this.saveCache(STORAGE_KEYS.CORTES, cortes);
-    if (jornadas.length > 0) this.saveCache(STORAGE_KEYS.JORNADAS, jornadas);
+  static syncAllToOffline(notices: any[], events: any[], vias: any[], cortes: any[], jornadas: any[], auditLogs?: any[]): void {
+    if (notices && notices.length > 0) this.saveCache(STORAGE_KEYS.NOTICES, notices);
+    if (events && events.length > 0) this.saveCache(STORAGE_KEYS.EVENTS, events);
+    if (vias && vias.length > 0) this.saveCache(STORAGE_KEYS.VIAS, vias);
+    if (cortes && cortes.length > 0) this.saveCache(STORAGE_KEYS.CORTES, cortes);
+    if (jornadas && jornadas.length > 0) this.saveCache(STORAGE_KEYS.JORNADAS, jornadas);
+    if (auditLogs && auditLogs.length > 0) this.saveCache(STORAGE_KEYS.AUDIT_LOGS, auditLogs);
     localStorage.setItem(STORAGE_KEYS.LAST_SYNC, new Date().toISOString());
   }
 }
