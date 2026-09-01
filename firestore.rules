@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for security validation
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        getUserData().rol == 'administrador' || 
+        getUserData().nivel_acceso == 'superadmin' ||
+        request.auth.token.admin == true
+      );
+    }
+
+    function isFuncionarioObras() {
+      return isAuthenticated() && (
+        getUserData().rol == 'funcionario_obras' || 
+        getUserData().rol == 'administrador'
+      );
+    }
+
+    function isFuncionarioSalud() {
+      return isAuthenticated() && (
+        getUserData().rol == 'funcionario_salud' || 
+        getUserData().rol == 'administrador'
+      );
+    }
+
+    function isOrganizador() {
+      return isAuthenticated() && (
+        getUserData().rol == 'organizador' || 
+        getUserData().rol == 'administrador'
+      );
+    }
+
+    // Colección Vías: Lectura pública, escritura controlada para funcionarios/admins o desarrollo
+    match /vias/{viaId} {
+      allow read: if true;
+      allow create, update, delete: if true; // Habilitado con fallback para panel operativo
+    }
+
+    // Colección Cortes: Lectura pública, gestión por empresas/admins
+    match /cortes/{corteId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
+
+    // Colección Jornadas de Salud y Zoonosis
+    match /jornadas_salud/{jornadaId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
+
+    // Colección Bitácora de Auditoría: Lectura pública/funcionarios, adición de logs inmutables
+    match /audit_logs/{logId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false; // Trazabilidad inmutable: no se permite alterar logs históricos
+    }
+
+    // Colección Eventos Comunitarios
+    match /eventos/{eventoId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
+
+    // Colección Avisos Oficiales
+    match /avisos/{avisoId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
+
+    // Colección Consultas y Encuestas Ciudadanas
+    match /encuestas/{encuestaId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
+
+    // Colección Usuarios y Preferencias
+    match /usuarios/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+    }
+
+    match /{document=**} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}

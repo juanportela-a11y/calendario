@@ -1,0 +1,6 @@
+{
+  "name": "PurifiCalendario",
+  "description": "Centro de Control Operativo Municipal, Gestión de Malla Vial, Cortes Programados de Servicios, Jornadas de Zoonosis y Agenda Digital de Purificación, Tolima",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

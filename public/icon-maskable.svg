@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgMask" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#072B61" />
+      <stop offset="50%" stop-color="#0D47A1" />
+      <stop offset="100%" stop-color="#1976D2" />
+    </linearGradient>
+    <linearGradient id="goldMask" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047" />
+      <stop offset="50%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+    <linearGradient id="riverMask" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284C7" />
+      <stop offset="50%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#2DD4BF" />
+    </linearGradient>
+  </defs>
+
+  <!-- Full background for maskable safety zone -->
+  <rect width="512" height="512" fill="url(#bgMask)" />
+
+  <!-- Inner safe-zone circle guide -->
+  <g transform="translate(0, 0)">
+    <!-- Sun -->
+    <circle cx="256" cy="120" r="32" fill="#FDE047" />
+    <circle cx="256" cy="120" r="50" fill="url(#goldMask)" opacity="0.3" />
+
+    <!-- Calendar Plate -->
+    <rect x="136" y="160" width="240" height="200" rx="30" fill="#FFFFFF" />
+    <path d="M 136 190 C 136 173.431, 149.431 160, 166 160 L 346 160 C 362.569 160, 376 173.431, 376 190 L 376 215 L 136 215 Z" fill="#DC2626" />
+    <rect x="136" y="212" width="240" height="4" fill="url(#goldMask)" />
+
+    <!-- Rings -->
+    <rect x="186" y="146" width="14" height="28" rx="7" fill="#D97706" stroke="#FFFFFF" stroke-width="2.5" />
+    <rect x="312" y="146" width="14" height="28" rx="7" fill="#D97706" stroke="#FFFFFF" stroke-width="2.5" />
+
+    <!-- Palm leaves -->
+    <g transform="translate(196, 235)">
+      <path d="M 60 76 Q 60 35 30 18 Q 55 30 60 76 Z" fill="#15803D" />
+      <path d="M 60 76 Q 60 35 90 18 Q 65 30 60 76 Z" fill="#16A34A" />
+      <path d="M 60 76 Q 60 20 60 8 Q 63 20 60 76 Z" fill="#4ADE80" />
+      <circle cx="94" cy="16" r="11" fill="#E11D48" stroke="#FFFFFF" stroke-width="2" />
+    </g>
+
+    <!-- River Wave -->
+    <path d="M 90 395 Q 170 370 256 395 T 422 395 L 422 418 Q 330 435 256 418 T 90 418 Z" fill="url(#riverMask)" opacity="0.9" />
+
+    <!-- Text -->
+    <text x="256" y="446" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="900" font-size="16" fill="#F8FAFC" letter-spacing="3">PURIFICACIÓN</text>
+  </g>
+</svg>

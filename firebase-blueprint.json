@@ -1,0 +1,142 @@
+{
+  "entities": {
+    "vias": {
+      "title": "Malla Vial e Incidencias",
+      "description": "Reportes y gestión de daños viales en Purificación",
+      "type": "object",
+      "properties": {
+        "id_via": { "type": "number" },
+        "titulo": { "type": "string" },
+        "tipo_dano": { "type": "string" },
+        "severidad": { "type": "string" },
+        "estado": { "type": "string" },
+        "direccion": { "type": "string" },
+        "barrio": { "type": "string" },
+        "coordenadas": { "type": "array" },
+        "descripcion": { "type": "string" },
+        "foto_antes": { "type": "string" },
+        "foto_despues": { "type": "string" },
+        "volumen_material_m3": { "type": "number" },
+        "tipo_asfalto": { "type": "string" },
+        "presupuesto_estimado_cop": { "type": "number" },
+        "cuadrilla_asignada": { "type": "string" },
+        "creado_por": { "type": "string" },
+        "fecha_reporte": { "type": "string" },
+        "fecha_actualizacion": { "type": "string" }
+      }
+    },
+    "cortes": {
+      "title": "Cortes Programados de Servicios",
+      "description": "Cortes de agua, luz y gas en sectores de Purificación",
+      "type": "object",
+      "properties": {
+        "id_corte": { "type": "number" },
+        "tipo": { "type": "string" },
+        "sector_barrio": { "type": "string" },
+        "coordenadas": { "type": "array" },
+        "radio_afectacion_metros": { "type": "number" },
+        "motivo": { "type": "string" },
+        "estado": { "type": "string" },
+        "fecha_inicio": { "type": "string" },
+        "hora_inicio": { "type": "string" },
+        "fecha_fin": { "type": "string" },
+        "hora_estimada_fin": { "type": "string" },
+        "poblacion_estimada_afectada": { "type": "number" },
+        "puntos_abastecimiento": { "type": "array" },
+        "cuadrilla_responsable": { "type": "string" },
+        "creado_por": { "type": "string" }
+      }
+    },
+    "jornadas_salud": {
+      "title": "Jornadas de Salud y Zoonosis",
+      "description": "Campañas de esterilización, vacunación y desparasitación",
+      "type": "object",
+      "properties": {
+        "id_jornada": { "type": "number" },
+        "titulo": { "type": "string" },
+        "fecha": { "type": "string" },
+        "hora_inicio": { "type": "string" },
+        "hora_fin": { "type": "string" },
+        "lugar": { "type": "string" },
+        "barrio": { "type": "string" },
+        "coordenadas": { "type": "array" },
+        "tipo_servicios": { "type": "array" },
+        "cupos_totales": { "type": "number" },
+        "cupos_ocupados": { "type": "number" },
+        "requisitos": { "type": "array" },
+        "responsable_entidad": { "type": "string" },
+        "creado_por": { "type": "string" },
+        "personal_asignado": { "type": "array" },
+        "inscritos": { "type": "array" }
+      }
+    },
+    "audit_logs": {
+      "title": "Bitácora de Auditoría",
+      "description": "Historial inmutable de acciones y trazabilidad de funcionarios",
+      "type": "object",
+      "properties": {
+        "id_log": { "type": "number" },
+        "timestamp": { "type": "string" },
+        "funcionario_nombre": { "type": "string" },
+        "funcionario_rol": { "type": "string" },
+        "modulo": { "type": "string" },
+        "accion": { "type": "string" },
+        "descripcion": { "type": "string" },
+        "id_referencia": { "type": "number" },
+        "detalles_anteriores": { "type": "string" },
+        "detalles_nuevos": { "type": "string" }
+      }
+    },
+    "eventos": {
+      "title": "Eventos Comunitarios",
+      "description": "Eventos culturales, deportivos y cívicos",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "titulo": { "type": "string" },
+        "descripcion": { "type": "string" },
+        "fecha": { "type": "string" },
+        "hora": { "type": "string" },
+        "lugar": { "type": "string" },
+        "categoria": { "type": "string" },
+        "destacado": { "type": "boolean" },
+        "imagen": { "type": "string" },
+        "cupoMaximo": { "type": "number" },
+        "asistentesActuales": { "type": "number" },
+        "organizador": { "type": "string" }
+      }
+    },
+    "avisos": {
+      "title": "Avisos Comunitarios",
+      "description": "Avisos de servicios públicos y alertas oficiales",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "titulo": { "type": "string" },
+        "descripcion": { "type": "string" },
+        "tipo": { "type": "string" },
+        "fechaPublicacion": { "type": "string" },
+        "fechaExpiracion": { "type": "string" },
+        "prioridad": { "type": "string" },
+        "autor": { "type": "string" },
+        "leido": { "type": "boolean" }
+      }
+    },
+    "encuestas": {
+      "title": "Consultas Ciudadanas",
+      "description": "Consultas participativas para votación vecinal en Purificación",
+      "type": "object",
+      "properties": {
+        "id_encuesta": { "type": "number" },
+        "titulo": { "type": "string" },
+        "descripcion": { "type": "string" },
+        "categoria": { "type": "string" },
+        "opciones": { "type": "array" },
+        "total_votos": { "type": "number" },
+        "activa": { "type": "boolean" },
+        "fecha_cierre": { "type": "string" },
+        "votos_usuarios": { "type": "object" }
+      }
+    }
+  }
+}
