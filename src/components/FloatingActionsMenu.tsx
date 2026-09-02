@@ -1,14 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, PhoneCall, MessageCircle, HelpCircle, X, ChevronUp, Sparkles, AlertCircle } from 'lucide-react';
+import { Bot, PhoneCall, MessageCircle, HelpCircle, X, ChevronUp, Sparkles, AlertCircle, Megaphone } from 'lucide-react';
 
 interface FloatingActionsMenuProps {
   onOpenAssistant: () => void;
   onOpenEmergencies: () => void;
+  onOpenReportar?: () => void;
 }
 
 export const FloatingActionsMenu: React.FC<FloatingActionsMenuProps> = ({
   onOpenAssistant,
   onOpenEmergencies,
+  onOpenReportar,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -80,7 +82,33 @@ export const FloatingActionsMenu: React.FC<FloatingActionsMenuProps> = ({
             </div>
           </button>
 
-          {/* Option 2: Emergencias 24/7 */}
+          {/* Option 2: Reportar Falla */}
+          {onOpenReportar && (
+            <button
+              onClick={() => {
+                onOpenReportar();
+                setIsOpen(false);
+              }}
+              className="w-full text-left p-2.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/20 hover:bg-blue-100/70 dark:hover:bg-blue-950/40 transition-all border border-blue-100 dark:border-blue-900/30 flex items-center gap-3 cursor-pointer group active:scale-[0.98]"
+            >
+              <div className="w-9 h-9 rounded-xl bg-[#2563EB] text-white flex items-center justify-center shadow-xs flex-shrink-0 group-hover:scale-105 transition-transform">
+                <Megaphone className="w-4 h-4 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-black text-blue-950 dark:text-blue-200">Reportar Falla</span>
+                  <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-blue-200 dark:bg-blue-900 text-blue-800 dark:text-blue-100">
+                    Cívico
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                  Agua, luz, aseo, vías
+                </p>
+              </div>
+            </button>
+          )}
+
+          {/* Option 3: Emergencias 24/7 */}
           <button
             onClick={() => {
               onOpenEmergencies();

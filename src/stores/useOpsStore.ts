@@ -11,7 +11,10 @@ import {
   InscritoJornada,
   PersonalSaludAsignado,
   EncuestaCiudadana,
-  ReporteCiudadanoDTO
+  ReporteCiudadanoDTO,
+  ReporteFallaCiudadana,
+  EstadoFalla,
+  TipoFalla
 } from '../types';
 import { 
   INITIAL_VIAS, 
@@ -19,6 +22,7 @@ import {
   INITIAL_JORNADAS_SALUD, 
   INITIAL_AUDIT_LOGS,
   INITIAL_ENCUESTAS,
+  INITIAL_FALLAS,
   RUTAS_DESVIOS_SUGERIDOS,
   RutaDesvio
 } from '../data/municipalOpsData';
@@ -35,7 +39,10 @@ import {
   subscribeToEncuestas,
   saveEncuestaToFirestore,
   subscribeToNotifiedUsers,
-  saveNotifiedUserToFirestore
+  saveNotifiedUserToFirestore,
+  subscribeToReportesFallas,
+  saveReporteFallaToFirestore,
+  deleteReporteFallaFromFirestore
 } from '../adapters/firebaseOpsAdapter';
 import { OfflineStorageManager, STORAGE_KEYS } from '../utils/offlineStorage';
 
@@ -45,6 +52,7 @@ interface OpsState {
   jornadas: JornadaSaludEsterilizacion[];
   auditLogs: RegistroAuditoria[];
   encuestas: EncuestaCiudadana[];
+  fallas: ReporteFallaCiudadana[];
   rutasDesvios: RutaDesvio[];
   isFirebaseSynced: boolean;
   isLoading: boolean;
@@ -75,6 +83,11 @@ interface OpsState {
   deleteCustomEncuesta: (idEncuesta: number, userMod?: string) => Promise<void>;
   addReporteIncidentFromMap: (tipo: 'vias' | 'cortes' | 'jornadas', desc: string, coords: [number, number], barrio?: string, user?: string) => Promise<void>;
 
+  // Reportes de Falla Ciudadana (Direct UI)
+  addReporteFalla: (data: Omit<ReporteFallaCiudadana, 'id_falla' | 'fecha_reporte' | 'estado'> & Partial<Pick<ReporteFallaCiudadana, 'estado' | 'fecha_reporte'>>) => Promise<ReporteFallaCiudadana>;
+  updateFallaEstado: (idFalla: number, nuevoEstado: EstadoFalla, respuestaOficial?: string, userMod?: string) => Promise<void>;
+  deleteReporteFalla: (idFalla: number, userMod?: string) => Promise<void>;
+
   // Domain Actions
   addVia: (viaData: Omit<ReporteVia, 'id_via'>) => Promise<void>;
   updateViaStatus: (idVia: number, nuevoEstado: EstadoVia, fotoDespues?: string, comentariosTecnicos?: string, userMod?: string) => Promise<void>;
@@ -102,6 +115,7 @@ export const useOpsStore = create<OpsState>((set, get) => ({
   jornadas: INITIAL_JORNADAS_SALUD,
   auditLogs: OfflineStorageManager.getCache(STORAGE_KEYS.AUDIT_LOGS, INITIAL_AUDIT_LOGS),
   encuestas: INITIAL_ENCUESTAS,
+  fallas: INITIAL_FALLAS,
   rutasDesvios: RUTAS_DESVIOS_SUGERIDOS,
   isFirebaseSynced: false,
   isLoading: true,
@@ -379,7 +393,13 @@ export const useOpsStore = create<OpsState>((set, get) => ({
           }
         });
 
-        unsubs = [unsubVias, unsubCortes, unsubJornadas, unsubLogs, unsubEncuestas, unsubNotified];
+        const unsubFallas = subscribeToReportesFallas((incomingFallas) => {
+          if (incomingFallas && incomingFallas.length > 0) {
+            set({ fallas: incomingFallas });
+          }
+        });
+
+        unsubs = [unsubVias, unsubCortes, unsubJornadas, unsubLogs, unsubEncuestas, unsubNotified, unsubFallas];
         set({ isFirebaseSynced: true, isLoading: false });
       } catch (err) {
         console.warn('Fallback a almacenamiento local/memoria:', err);
@@ -853,5 +873,134 @@ export const useOpsStore = create<OpsState>((set, get) => ({
     }));
     await saveAuditLogToFirestore(log);
     showToast('✓ ¡Voto registrado con éxito! Gracias por participar.');
+  },
+
+  addReporteFalla: async (data) => {
+    const { fallas, showToast, addUserPoints } = get();
+    const newId = Date.now();
+    const now = new Date();
+    const fechaFormatted = `${now.toISOString().split('T')[0]} ${now.toTimeString().slice(0, 5)}`;
+    
+    // Assign responsible company based on type
+    let empresa = 'Alcaldía Municipal de Purificación';
+    if (data.tipo === 'agua') empresa = 'EMPOPUR E.S.P. - Acueducto & Alcantarillado';
+    else if (data.tipo === 'luz') empresa = 'CELSIA Tolima & Alumbrado Municipal';
+    else if (data.tipo === 'aseo') empresa = 'EMPOPUR E.S.P. - División Aseo Urbano';
+    else if (data.tipo === 'vias') empresa = 'Secretaría de Infraestructura y Malla Vial';
+
+    const newReporte: ReporteFallaCiudadana = {
+      id_falla: newId,
+      tipo: data.tipo,
+      descripcion: data.descripcion,
+      ubicacion: data.ubicacion,
+      barrio: data.barrio,
+      coordenadas: data.coordenadas,
+      foto_url: data.foto_url,
+      id_usuario: data.id_usuario,
+      nombre_ciudadano: data.nombre_ciudadano || 'Ciudadano de Purificación',
+      correo_ciudadano: data.correo_ciudadano,
+      telefono_ciudadano: data.telefono_ciudadano,
+      fecha_reporte: fechaFormatted,
+      estado: 'pendiente',
+      empresa_responsable: empresa,
+      puntos_ganados: 30
+    };
+
+    set({ fallas: [newReporte, ...fallas] });
+    await saveReporteFallaToFirestore(newReporte);
+
+    // Audit log
+    const log: RegistroAuditoria = {
+      id_log: Date.now(),
+      timestamp: fechaFormatted,
+      funcionario_nombre: data.nombre_ciudadano || 'Ciudadano',
+      funcionario_rol: 'Veeduría Ciudadana',
+      modulo: 'Ciudadanía',
+      accion: 'REPORTE_CIUDADANO',
+      descripcion: `Radicó reporte de falla [${data.tipo.toUpperCase()}] #${newId}: "${data.descripcion.slice(0, 50)}..." en ${data.barrio}`,
+      id_referencia: newId,
+      detalles_nuevos: `Ubicación: ${data.ubicacion} | Entidad: ${empresa}`
+    };
+
+    set((s) => ({
+      auditLogs: [log, ...s.auditLogs],
+      lastAuditSyncTime: now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    }));
+    await saveAuditLogToFirestore(log);
+
+    // Reward citizen points
+    addUserPoints(30, `Reporte ciudadano de falla (${data.tipo.toUpperCase()})`);
+    showToast(`✓ ¡Reporte #${newId} radicado exitosamente! Has ganado 30 PurifiPuntos.`);
+
+    return newReporte;
+  },
+
+  updateFallaEstado: async (idFalla, nuevoEstado, respuestaOficial, userMod = 'Administrador') => {
+    const { fallas, showToast } = get();
+    const target = fallas.find(f => f.id_falla === idFalla);
+    if (!target) return;
+
+    const now = new Date();
+    const fechaFormatted = `${now.toISOString().split('T')[0]} ${now.toTimeString().slice(0, 5)}`;
+    
+    const updated: ReporteFallaCiudadana = {
+      ...target,
+      estado: nuevoEstado,
+      respuesta_oficial: respuestaOficial !== undefined ? respuestaOficial : target.respuesta_oficial,
+      fecha_solucion: nuevoEstado === 'resuelto' ? fechaFormatted : target.fecha_solucion
+    };
+
+    set({ fallas: fallas.map(f => f.id_falla === idFalla ? updated : f) });
+    await saveReporteFallaToFirestore(updated);
+
+    const log: RegistroAuditoria = {
+      id_log: Date.now(),
+      timestamp: fechaFormatted,
+      funcionario_nombre: userMod,
+      funcionario_rol: 'Administración Municipal',
+      modulo: 'Ciudadanía',
+      accion: 'ACTUALIZACIÓN_ESTADO',
+      descripcion: `Actualizó estado del reporte de falla #${idFalla} a [${nuevoEstado.toUpperCase()}].`,
+      id_referencia: idFalla,
+      detalles_anteriores: `Estado: ${target.estado}`,
+      detalles_nuevos: `Estado: ${nuevoEstado}${respuestaOficial ? ` | Respuesta: ${respuestaOficial}` : ''}`
+    };
+
+    set((s) => ({
+      auditLogs: [log, ...s.auditLogs],
+      lastAuditSyncTime: now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    }));
+    await saveAuditLogToFirestore(log);
+
+    showToast(`✓ Reporte #${idFalla} actualizado a "${nuevoEstado}".`);
+  },
+
+  deleteReporteFalla: async (idFalla, userMod = 'Administrador') => {
+    const { fallas, showToast } = get();
+    const target = fallas.find(f => f.id_falla === idFalla);
+    if (!target) return;
+
+    set({ fallas: fallas.filter(f => f.id_falla !== idFalla) });
+    await deleteReporteFallaFromFirestore(idFalla);
+
+    const now = new Date();
+    const log: RegistroAuditoria = {
+      id_log: Date.now(),
+      timestamp: `${now.toISOString().split('T')[0]} ${now.toTimeString().slice(0, 5)}`,
+      funcionario_nombre: userMod,
+      funcionario_rol: 'Administración Municipal',
+      modulo: 'Ciudadanía',
+      accion: 'ELIMINACIÓN',
+      descripcion: `Eliminó reporte de falla #${idFalla} ("${target.descripcion.slice(0, 30)}...")`,
+      id_referencia: idFalla
+    };
+
+    set((s) => ({
+      auditLogs: [log, ...s.auditLogs],
+      lastAuditSyncTime: now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    }));
+    await saveAuditLogToFirestore(log);
+
+    showToast(`✓ Reporte #${idFalla} eliminado.`);
   }
 }));

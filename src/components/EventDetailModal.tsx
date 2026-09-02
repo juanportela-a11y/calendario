@@ -17,7 +17,8 @@ import {
   CalendarPlus,
   ExternalLink,
   Bell,
-  BellRing
+  BellRing,
+  Trash2
 } from 'lucide-react';
 import { Evento } from '../types';
 import { EventoDomain } from '../domain/entities';
@@ -30,13 +31,17 @@ interface EventDetailModalProps {
   onClose: () => void;
   isSaved: boolean;
   onToggleSave: (idEvento: number) => void;
+  onDeleteEvent?: (idEvento: number) => void;
+  canDelete?: boolean;
 }
 
 export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   evento,
   onClose,
   isSaved,
-  onToggleSave
+  onToggleSave,
+  onDeleteEvent,
+  canDelete
 }) => {
   const [copied, setCopied] = React.useState(false);
 
@@ -299,11 +304,25 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
             >
               {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4" />}
             </button>
+
+            {canDelete && onDeleteEvent && (
+              <button
+                onClick={() => {
+                  onDeleteEvent(evento.id_evento);
+                  onClose();
+                }}
+                className="px-3.5 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 text-xs font-bold hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+                title="Eliminar este evento de la plataforma"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Eliminar Evento</span>
+              </button>
+            )}
           </div>
 
           <button
             onClick={onClose}
-            className="px-6 py-2.5 rounded-xl bg-[#0D47A1] text-white text-xs font-bold hover:bg-blue-800 transition-colors shadow-md"
+            className="px-6 py-2.5 rounded-xl bg-[#0D47A1] text-white text-xs font-bold hover:bg-blue-800 transition-colors shadow-md cursor-pointer"
           >
             Entendido
           </button>

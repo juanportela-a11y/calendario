@@ -214,8 +214,32 @@ export interface JornadaSaludEsterilizacion {
 // PARTICIPACIÓN CIUDADANA Y ENCUESTAS
 // ==========================================
 
+export type TipoFalla = 'agua' | 'luz' | 'aseo' | 'vias';
+export type EstadoFalla = 'pendiente' | 'en_revision' | 'cuadrilla_asignada' | 'en_reparacion' | 'resuelto';
+
+export interface ReporteFallaCiudadana {
+  id_falla: number;
+  tipo: TipoFalla;
+  descripcion: string;
+  ubicacion: string;
+  barrio: string;
+  coordenadas?: [number, number];
+  foto_url?: string;
+  id_usuario?: number;
+  nombre_ciudadano: string;
+  correo_ciudadano?: string;
+  telefono_ciudadano?: string;
+  fecha_reporte: string;
+  estado: EstadoFalla;
+  empresa_responsable?: string;
+  respuesta_oficial?: string;
+  fecha_solucion?: string;
+  cuadrilla_asignada?: string;
+  puntos_ganados?: number;
+}
+
 export interface ReporteCiudadanoDTO {
-  tipo: 'via_danada' | 'esterilizacion_mascotas' | 'corte_servicio' | 'alerta_ambiental' | 'alumbrado_publico';
+  tipo: 'via_danada' | 'esterilizacion_mascotas' | 'corte_servicio' | 'alerta_ambiental' | 'alumbrado_publico' | 'falla_general';
   titulo: string;
   descripcion: string;
   direccion: string;

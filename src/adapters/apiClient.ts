@@ -25,6 +25,9 @@ import {
 } from './firebaseOpsAdapter';
 import { triggerLocalPush } from '../utils/notificationUtils';
 
+let localEvents: Evento[] = [...INITIAL_EVENTS];
+let localNotices: Aviso[] = [...INITIAL_NOTICES];
+
 export class ApiClientAdapter {
   private static async request<T>(endpoint: string, options?: RequestInit, fallbackData?: T): Promise<T> {
     try {
@@ -85,11 +88,11 @@ export class ApiClientAdapter {
     if (params?.organizerId) query.append('organizerId', String(params.organizerId));
 
     const url = `/api/events${query.toString() ? `?${query.toString()}` : ''}`;
-    return this.request<Evento[]>(url, undefined, INITIAL_EVENTS);
+    return this.request<Evento[]>(url, undefined, localEvents);
   }
 
   static async getEventById(id: number): Promise<Evento> {
-    const fallback = INITIAL_EVENTS.find(e => e.id_evento === id) || INITIAL_EVENTS[0];
+    const fallback = localEvents.find(e => e.id_evento === id) || INITIAL_EVENTS[0];
     return this.request<Evento>(`/api/events/${id}`, undefined, fallback);
   }
 
@@ -122,6 +125,8 @@ export class ApiClientAdapter {
       console.warn('API createEvent fallback to local:', e);
     }
 
+    localEvents.unshift(resultEvent);
+
     // Real-time synchronization to Firebase Firestore
     try {
       await saveEventoToFirestore(resultEvent);
@@ -148,7 +153,7 @@ export class ApiClientAdapter {
   }
 
   static async updateEvent(id: number, dto: Partial<CreateEventoDTO>): Promise<Evento> {
-    const existing = INITIAL_EVENTS.find(e => e.id_evento === id) || INITIAL_EVENTS[0];
+    const existing = localEvents.find(e => e.id_evento === id) || INITIAL_EVENTS[0];
     const fallbackUpdated: Evento = { ...existing, ...dto };
 
     let resultEvent = fallbackUpdated;
@@ -160,6 +165,8 @@ export class ApiClientAdapter {
     } catch (e) {
       console.warn('API updateEvent fallback to local:', e);
     }
+
+    localEvents = localEvents.map(e => e.id_evento === id ? resultEvent : e);
 
     // Sync to Firestore
     try {
@@ -181,6 +188,8 @@ export class ApiClientAdapter {
   }
 
   static async deleteEvent(id: number): Promise<{ success: boolean }> {
+    localEvents = localEvents.filter(e => e.id_evento !== id);
+
     try {
       await deleteEventoFromFirestore(id);
     } catch (e) {
@@ -194,7 +203,7 @@ export class ApiClientAdapter {
 
   // Avisos (Notices)
   static async getNotices(): Promise<Aviso[]> {
-    return this.request<Aviso[]>('/api/notices', undefined, INITIAL_NOTICES);
+    return this.request<Aviso[]>('/api/notices', undefined, localNotices);
   }
 
   static async createNotice(dto: CreateAvisoDTO, idUsuarioCreador: number): Promise<Aviso> {
@@ -220,6 +229,8 @@ export class ApiClientAdapter {
       console.warn('API createNotice fallback:', e);
     }
 
+    localNotices.unshift(resultNotice);
+
     try {
       await saveAvisoToFirestore(resultNotice);
     } catch (fsErr) {
@@ -238,6 +249,8 @@ export class ApiClientAdapter {
   }
 
   static async deleteNotice(id: number): Promise<{ success: boolean }> {
+    localNotices = localNotices.filter(n => n.id_aviso !== id);
+
     try {
       await deleteAvisoFromFirestore(id);
     } catch (e) {

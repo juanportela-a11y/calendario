@@ -19,13 +19,15 @@ import {
   Evento,
   Aviso,
   Usuario,
-  EncuestaCiudadana
+  EncuestaCiudadana,
+  ReporteFallaCiudadana
 } from '../types';
 import { 
   INITIAL_VIAS, 
   INITIAL_CORTES, 
   INITIAL_JORNADAS_SALUD, 
-  INITIAL_AUDIT_LOGS 
+  INITIAL_AUDIT_LOGS,
+  INITIAL_FALLAS
 } from '../data/municipalOpsData';
 import { INITIAL_EVENTS, INITIAL_NOTICES, INITIAL_USERS } from '../data/initialData';
 
@@ -39,7 +41,8 @@ export const COLLECTIONS = {
   AVISOS: 'avisos',
   USUARIOS: 'usuarios',
   ENCUESTAS: 'encuestas',
-  LECTURA_AVISOS: 'lectura_avisos'
+  LECTURA_AVISOS: 'lectura_avisos',
+  REPORTES_FALLAS: 'reportes_fallas'
 };
 
 // Helper to remove undefined fields recursively to prevent Firestore errors
@@ -389,4 +392,34 @@ export const saveNotifiedUserToFirestore = async (usuario: string, noticeId?: nu
     noticeId: noticeId || null,
     timestamp: new Date().toISOString()
   }, { merge: true });
+};
+
+// --- REAL-TIME REPORTES DE FALLAS CIUDADANAS ---
+export const subscribeToReportesFallas = (callback: (fallas: ReporteFallaCiudadana[]) => void): Unsubscribe => {
+  const q = collection(db, COLLECTIONS.REPORTES_FALLAS);
+  return onSnapshot(q, (snapshot) => {
+    if (snapshot.empty) {
+      callback(INITIAL_FALLAS);
+      return;
+    }
+    const list: ReporteFallaCiudadana[] = [];
+    snapshot.forEach((docSnap) => {
+      list.push(docSnap.data() as ReporteFallaCiudadana);
+    });
+    list.sort((a, b) => (Number(b.id_falla) || 0) - (Number(a.id_falla) || 0));
+    callback(list);
+  }, (err) => {
+    console.error('Firestore subscribeToReportesFallas error:', err);
+    callback(INITIAL_FALLAS);
+  });
+};
+
+export const saveReporteFallaToFirestore = async (falla: ReporteFallaCiudadana) => {
+  const ref = doc(db, COLLECTIONS.REPORTES_FALLAS, String(falla.id_falla));
+  await setDoc(ref, sanitizeForFirestore(falla), { merge: true });
+};
+
+export const deleteReporteFallaFromFirestore = async (id_falla: number) => {
+  const ref = doc(db, COLLECTIONS.REPORTES_FALLAS, String(id_falla));
+  await deleteDoc(ref);
 };

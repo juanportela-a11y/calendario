@@ -13,7 +13,8 @@ import {
   Truck,
   Sparkles,
   ShieldAlert,
-  Building2
+  Building2,
+  Megaphone
 } from 'lucide-react';
 import { RUTAS_ASEO, EMERGENCY_CONTACTS } from '../../data/municipalServicesData';
 
@@ -21,12 +22,14 @@ interface CitizenQuickHubProps {
   onOpenEmergencies?: () => void;
   onOpenServicesGuide?: () => void;
   onOpenOpsDashboard?: () => void;
+  onOpenReportar?: () => void;
 }
 
 export const CitizenQuickHub: React.FC<CitizenQuickHubProps> = ({
   onOpenEmergencies,
   onOpenServicesGuide,
-  onOpenOpsDashboard
+  onOpenOpsDashboard,
+  onOpenReportar
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<'farmacias' | 'aseo' | 'vias' | 'tramites'>('farmacias');
 
@@ -375,6 +378,33 @@ export const CitizenQuickHub: React.FC<CitizenQuickHubProps> = ({
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Direct Civic Report Banner */}
+      {onOpenReportar && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 dark:from-blue-950/40 dark:via-slate-800/60 dark:to-blue-950/40 border border-blue-200/80 dark:border-blue-900/60 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-[#2563EB] text-white flex items-center justify-center shadow-xs shrink-0">
+              <Megaphone className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-xs font-black text-slate-900 dark:text-white">
+                ¿Problemas con agua, luz, aseo o vías en tu barrio?
+              </h4>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Radica tu reporte con foto y ubicación GPS para atención de cuadrillas y gana +30 PurifiPuntos.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={onOpenReportar}
+            className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+          >
+            <span>Reportar Falla Ahora</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 

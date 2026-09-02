@@ -3,7 +3,8 @@ import {
   CorteProgramado, 
   JornadaSaludEsterilizacion, 
   RegistroAuditoria,
-  EncuestaCiudadana
+  EncuestaCiudadana,
+  ReporteFallaCiudadana
 } from '../types';
 
 export const BARRIOS_PURIFICACION = [
@@ -414,5 +415,71 @@ export const INITIAL_AUDIT_LOGS: RegistroAuditoria[] = [
     accion: 'REGISTRO_INSCRIPCIÓN',
     descripcion: 'Inscribió mascota canina "Max" (Tutor: Ana Mercedes Tique) en turno de las 08:30 a.m. para esterilización.',
     id_referencia: 301
+  }
+];
+
+export const INITIAL_FALLAS: ReporteFallaCiudadana[] = [
+  {
+    id_falla: 501,
+    tipo: 'aseo',
+    descripcion: 'Acumulación de residuos sólidos y ramas secas en esquina del parque infantil tras la jornada del fin de semana.',
+    ubicacion: 'Barrio Ospina Pérez, frente al parque infantil',
+    barrio: 'Ospina Pérez',
+    coordenadas: [3.8575, -74.9290],
+    nombre_ciudadano: 'María Camila Rozo',
+    correo_ciudadano: 'mcrozo@purificacion.gov.co',
+    telefono_ciudadano: '312 456 7890',
+    fecha_reporte: '2026-08-28 09:30',
+    estado: 'cuadrilla_asignada',
+    empresa_responsable: 'EMPOPUR E.S.P. - División Aseo',
+    cuadrilla_asignada: 'Ruta 2 Recolección Pesada',
+    respuesta_oficial: 'Cuadrilla de barrido y volqueta programada para hoy a las 2:00 PM.',
+    puntos_ganados: 30
+  },
+  {
+    id_falla: 502,
+    tipo: 'agua',
+    descripcion: 'Fuga de agua potable visible en la acometida sobre la acera peatonal con pérdida constante de presión.',
+    ubicacion: 'Carrera 7 con Calle 5, Barrio El Centro',
+    barrio: 'El Centro',
+    coordenadas: [3.8582, -74.9285],
+    nombre_ciudadano: 'Julián Gómez',
+    correo_ciudadano: 'jgomez@gmail.com',
+    telefono_ciudadano: '310 987 6543',
+    fecha_reporte: '2026-08-27 14:15',
+    estado: 'en_reparacion',
+    empresa_responsable: 'EMPOPUR E.S.P. - Acueducto',
+    cuadrilla_asignada: 'Técnicos de Redes Primarias',
+    respuesta_oficial: 'Técnicos se encuentran en sitio realizando cambio de válvula reguladora.',
+    puntos_ganados: 30
+  },
+  {
+    id_falla: 503,
+    tipo: 'luz',
+    descripcion: 'Luminaria de alumbrado público parpadea constantemente y no ilumina el tramo peatonal.',
+    ubicacion: 'Calle 8 # 3-45, Barrio Santa Librada',
+    barrio: 'Santa Librada',
+    coordenadas: [3.8590, -74.9310],
+    nombre_ciudadano: 'Claudia Marcela Peña',
+    fecha_reporte: '2026-08-25 19:40',
+    estado: 'resuelto',
+    empresa_responsable: 'CELSIA Tolima & Alumbrado Purificación',
+    fecha_solucion: '2026-08-26 11:00',
+    respuesta_oficial: 'Se realizó reemplazo de bombilla LED de 100W y fotocelda.',
+    puntos_ganados: 30
+  },
+  {
+    id_falla: 504,
+    tipo: 'vias',
+    descripcion: 'Hueco de gran profundidad formado por aguas lluvias cerca al reductor de velocidad.',
+    ubicacion: 'Avenida Santander frente a ferretería Central',
+    barrio: 'Santander',
+    coordenadas: [3.8610, -74.9320],
+    nombre_ciudadano: 'Pedro Nel Ospina',
+    fecha_reporte: '2026-08-24 08:20',
+    estado: 'en_revision',
+    empresa_responsable: 'Secretaría de Infraestructura y Vías',
+    respuesta_oficial: 'Ingeniero de obras programó visita técnica para cubicación de asfalto.',
+    puntos_ganados: 30
   }
 ];

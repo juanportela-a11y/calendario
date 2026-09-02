@@ -22,7 +22,8 @@ import {
   Store,
   Compass,
   ChevronDown,
-  Settings
+  Settings,
+  Megaphone
 } from 'lucide-react';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '../firebase';
@@ -92,22 +93,25 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [googleLoading, setGoogleLoading] = React.useState(false);
   const [utilsMenuOpen, setUtilsMenuOpen] = React.useState(false);
+  const [navMenuOpen, setNavMenuOpen] = React.useState(false);
   const utilsRef = React.useRef<HTMLDivElement>(null);
+  const navMenuRef = React.useRef<HTMLDivElement>(null);
 
-  // Close utilities dropdown on outside click
+  // Close menus on outside click
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (utilsRef.current && !utilsRef.current.contains(event.target as Node)) {
         setUtilsMenuOpen(false);
       }
+      if (navMenuRef.current && !navMenuRef.current.contains(event.target as Node)) {
+        setNavMenuOpen(false);
+      }
     };
-    if (utilsMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [utilsMenuOpen]);
+  }, []);
 
   const { userPoints } = useOpsStore();
 
@@ -174,6 +178,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const desktopNavItems = [
     { id: 'inicio', label: 'Inicio', icon: Sparkles },
+    { id: 'reportar', label: 'Reportar Falla', icon: Megaphone },
     { id: 'operaciones', label: 'Operaciones', icon: Activity },
     { id: 'calendario', label: 'Calendario', icon: Calendar },
     { id: 'turismo', label: 'Turismo', icon: Store },
@@ -182,6 +187,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const mobileNavItems = [
     { id: 'inicio', label: 'Inicio', icon: Sparkles },
+    { id: 'reportar', label: 'Reportar Falla', icon: Megaphone },
     { id: 'operaciones', label: 'Operaciones', icon: Activity },
     { id: 'calendario', label: 'Calendario', icon: Calendar },
     { id: 'turismo', label: 'Turismo', icon: Store },
@@ -236,61 +242,227 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-1 p-1 rounded-2xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 backdrop-blur-md shadow-xs flex-shrink min-w-0">
-            {desktopNavItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`relative px-2.5 xl:px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                    isActive
-                      ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs border border-slate-200/80 dark:border-slate-700/80'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/50'
-                  }`}
-                >
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-400'}`} />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
+          {/* Desktop Navigation Links & Organized Menu */}
+          <nav className="hidden lg:flex items-center gap-1.5 p-1 rounded-2xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 backdrop-blur-md shadow-xs flex-shrink min-w-0">
+            {/* 1. Inicio */}
+            <button
+              onClick={() => setActiveTab('inicio')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                activeTab === 'inicio'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs border border-slate-200/80 dark:border-slate-700/80'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/50'
+              }`}
+            >
+              <Sparkles className={`w-3.5 h-3.5 ${activeTab === 'inicio' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`} />
+              <span>Inicio</span>
+            </button>
 
-            {/* Special Role Panels Buttons */}
-            {currentUser?.rol === 'organizador' && (
-              <>
-                <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-0.5" />
-                <button
-                  onClick={() => setActiveTab('panel-organizador')}
-                  className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap ${
-                    activeTab === 'panel-organizador'
-                      ? 'bg-emerald-600 text-white shadow-xs'
-                      : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 border border-emerald-200/80 dark:border-emerald-800/80'
-                  }`}
-                >
-                  <PlusCircle className="w-3.5 h-3.5" />
-                  <span>Organizador</span>
-                </button>
-              </>
-            )}
+            {/* 2. Reportar Falla (Destacado Cívico) */}
+            <button
+              onClick={() => setActiveTab('reportar')}
+              className={`relative px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                activeTab === 'reportar' || activeTab === 'reportar-falla'
+                  ? 'bg-[#2563EB] text-white shadow-xs scale-[1.02]'
+                  : 'bg-blue-50/90 dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200/80 dark:border-blue-800/80'
+              }`}
+            >
+              <Megaphone className={`w-3.5 h-3.5 ${activeTab === 'reportar' ? 'text-white' : 'text-[#2563EB] dark:text-blue-400'}`} />
+              <span>Reportar Falla</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            </button>
 
-            {currentUser?.rol === 'administrador' && (
-              <>
-                <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-0.5" />
-                <button
-                  onClick={() => setActiveTab('panel-admin')}
-                  className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap ${
-                    activeTab === 'panel-admin'
-                      ? 'bg-blue-900 text-white shadow-xs'
-                      : 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/80 border border-amber-300/80 dark:border-amber-700/80'
-                  }`}
-                >
-                  <ShieldAlert className="w-3.5 h-3.5" />
-                  <span>Admin</span>
-                </button>
-              </>
-            )}
+            {/* 3. Menú Desplegable Completo de Secciones */}
+            <div className="relative" ref={navMenuRef}>
+              <button
+                type="button"
+                onClick={() => setNavMenuOpen(!navMenuOpen)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                  navMenuOpen || ['calendario', 'operaciones', 'turismo', 'avisos', 'panel-organizador', 'panel-admin'].includes(activeTab)
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-700/60'
+                }`}
+              >
+                <Menu className="w-3.5 h-3.5" />
+                <span>Menú de Servicios</span>
+                <ChevronDown className={`w-3 h-3 transition-transform ${navMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Categorized Mega Dropdown Menu */}
+              {navMenuOpen && (
+                <div className="absolute left-0 mt-2 w-80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-3 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                  
+                  {/* Categoría: Agenda & Eventos */}
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2 block mb-1">
+                      Comunidad & Eventos
+                    </span>
+                    <div className="space-y-1">
+                      <button
+                        onClick={() => {
+                          setActiveTab('calendario');
+                          setNavMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          activeTab === 'calendario'
+                            ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400'
+                            : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                            <Calendar className="w-4 h-4" />
+                          </div>
+                          <div className="text-left">
+                            <span className="block font-black">Calendario de Eventos</span>
+                            <span className="text-[10px] text-slate-400 font-normal">Festividades, talleres y ferias</span>
+                          </div>
+                        </div>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setActiveTab('avisos');
+                          setNavMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          activeTab === 'avisos'
+                            ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400'
+                            : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                            <ShieldAlert className="w-4 h-4" />
+                          </div>
+                          <div className="text-left">
+                            <span className="block font-black">Avisos Oficiales</span>
+                            <span className="text-[10px] text-slate-400 font-normal">Comunicados y alertas alcaldía</span>
+                          </div>
+                        </div>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setActiveTab('turismo');
+                          setNavMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          activeTab === 'turismo'
+                            ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400'
+                            : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                            <Store className="w-4 h-4" />
+                          </div>
+                          <div className="text-left">
+                            <span className="block font-black">Turismo & Directorio</span>
+                            <span className="text-[10px] text-slate-400 font-normal">Comercios, gastronomía y sitios</span>
+                          </div>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Categoría: Operaciones & Servicios Públicos */}
+                  <div className="pt-1 border-t border-slate-100 dark:border-slate-800">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2 block mb-1">
+                      Servicios Cívicos & Operaciones
+                    </span>
+                    <div className="space-y-1">
+                      <button
+                        onClick={() => {
+                          setActiveTab('operaciones');
+                          setNavMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          activeTab === 'operaciones'
+                            ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400'
+                            : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                            <Activity className="w-4 h-4" />
+                          </div>
+                          <div className="text-left">
+                            <span className="block font-black">Centro de Operaciones</span>
+                            <span className="text-[10px] text-slate-400 font-normal">Monitoreo y mapa de incidencias</span>
+                          </div>
+                        </div>
+                      </button>
+
+                      {onOpenServicesGuide && (
+                        <button
+                          onClick={() => {
+                            onOpenServicesGuide();
+                            setNavMenuOpen(false);
+                          }}
+                          className="w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-all cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-lg bg-teal-100 dark:bg-teal-900/60 flex items-center justify-center text-teal-600 dark:text-teal-400">
+                              <Truck className="w-4 h-4" />
+                            </div>
+                            <div className="text-left">
+                              <span className="block font-black">Rutas de Aseo & Trámites</span>
+                              <span className="text-[10px] text-slate-400 font-normal">Horarios EMPOPUR y trámites</span>
+                            </div>
+                          </div>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Categoría: Paneles Especiales según Rol */}
+                  {(currentUser?.rol === 'organizador' || currentUser?.rol === 'administrador') && (
+                    <div className="pt-1 border-t border-slate-100 dark:border-slate-800 space-y-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2 block mb-1">
+                        Gestión & Administración
+                      </span>
+                      {currentUser?.rol === 'organizador' && (
+                        <button
+                          onClick={() => {
+                            setActiveTab('panel-organizador');
+                            setNavMenuOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                            activeTab === 'panel-organizador'
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <PlusCircle className="w-4 h-4" />
+                            <span>Panel de Organizador</span>
+                          </div>
+                        </button>
+                      )}
+                      {currentUser?.rol === 'administrador' && (
+                        <button
+                          onClick={() => {
+                            setActiveTab('panel-admin');
+                            setNavMenuOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                            activeTab === 'panel-admin'
+                              ? 'bg-blue-900 text-white'
+                              : 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 hover:bg-amber-100'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <ShieldAlert className="w-4 h-4" />
+                            <span>Panel de Administración</span>
+                          </div>
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                </div>
+              )}
+            </div>
           </nav>
 
           {/* User Profile, Unified Menu & Auth Container */}

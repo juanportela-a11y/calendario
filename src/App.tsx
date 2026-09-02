@@ -52,6 +52,7 @@ import { WasteAndServicesGuideModal } from './components/services/WasteAndServic
 import { PurifiGuiaAssistantModal } from './components/assistant/PurifiGuiaAssistantModal';
 import { FloatingActionsMenu } from './components/FloatingActionsMenu';
 import { CalendarSkeleton, DashboardCardSkeleton } from './components/common/SkeletonLoaders';
+import { ConfirmDeleteModal, DeleteTargetInfo } from './components/common/ConfirmDeleteModal';
 import { useOpsStore } from './stores/useOpsStore';
 
 // Dynamic Lazy Loading & Code Splitting for Heavy Modules
@@ -66,6 +67,7 @@ const AdminPanel = lazy(() => import('./components/AdminPanel').then(m => ({ def
 const DatabaseInspectorModal = lazy(() => import('./components/DatabaseInspectorModal').then(m => ({ default: m.DatabaseInspectorModal })));
 const CreateNoticeModal = lazy(() => import('./components/CreateNoticeModal').then(m => ({ default: m.CreateNoticeModal })));
 const AuthModal = lazy(() => import('./components/AuthModal').then(m => ({ default: m.AuthModal })));
+const ReportarFallaScreen = lazy(() => import('./components/ReportarFallaScreen').then(m => ({ default: m.ReportarFallaScreen })));
 
 export default function App() {
   // Application State
@@ -128,6 +130,7 @@ export default function App() {
   const [showEmergenciesModal, setShowEmergenciesModal] = useState(false);
   const [showServicesGuideModal, setShowServicesGuideModal] = useState(false);
   const [showAssistantModal, setShowAssistantModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTargetInfo | null>(null);
 
   // Event Directory Filters
   const [searchEventText, setSearchEventText] = useState('');
@@ -208,7 +211,8 @@ export default function App() {
     jornadas, 
     auditLogs,
     initFirestoreSync,
-    addAuditLog 
+    addAuditLog,
+    showToast
   } = useOpsStore();
 
   const urgentNotice = notices.find(n => n.urgente) || null;
@@ -219,7 +223,7 @@ export default function App() {
 
     // Subscribe in real-time to Events
     const unsubEvents = subscribeToEventos((liveEvents) => {
-      if (liveEvents && liveEvents.length > 0) {
+      if (liveEvents) {
         setEvents(liveEvents);
         OfflineStorageManager.saveCache(STORAGE_KEYS.EVENTS, liveEvents);
       }
@@ -227,7 +231,7 @@ export default function App() {
 
     // Subscribe in real-time to Notices
     const unsubNotices = subscribeToAvisos((liveNotices) => {
-      if (liveNotices && liveNotices.length > 0) {
+      if (liveNotices) {
         setNotices(liveNotices);
         OfflineStorageManager.saveCache(STORAGE_KEYS.NOTICES, liveNotices);
       }
@@ -401,19 +405,15 @@ export default function App() {
   };
 
   const handleDeleteEvent = async (id: number) => {
-    if (window.confirm('¿Está seguro de eliminar este evento?')) {
-      const ev = events.find(e => e.id_evento === id);
-      await ApiClientAdapter.deleteEvent(id);
-      await addAuditLog({
-        funcionario_nombre: currentUser ? currentUser.nombre_usuario : 'Administrador',
-        funcionario_rol: 'Administración Municipal',
-        modulo: 'Eventos',
-        accion: 'ELIMINACIÓN',
-        descripcion: `Eliminó el evento #${id}${ev ? `: "${ev.nombre}"` : ''}`,
-        id_referencia: id
-      });
-      await loadAllData();
-    }
+    const ev = events.find(e => e.id_evento === id);
+    setDeleteTarget({
+      type: 'evento',
+      id,
+      title: ev ? ev.nombre : `Evento #${id}`,
+      subtitle: ev ? ev.descripcion : undefined,
+      categoryOrSector: ev?.categoria?.nombre || 'General',
+      date: ev ? `${ev.fecha} • ${ev.hora_inicio} (${ev.lugar})` : undefined
+    });
   };
 
   const handleCreateNotice = async (dto: CreateAvisoDTO) => {
@@ -428,22 +428,63 @@ export default function App() {
       id_referencia: created ? (created as any).id_aviso : undefined,
       detalles_nuevos: `Sector: ${dto.sector_afectado || 'General'}`
     });
+    showToast('✓ Aviso oficial publicado con éxito');
     await loadAllData();
   };
 
   const handleDeleteNotice = async (id: number) => {
-    if (window.confirm('¿Está seguro de eliminar este aviso?')) {
-      const notice = notices.find(n => n.id_aviso === id);
-      await ApiClientAdapter.deleteNotice(id);
-      await addAuditLog({
-        funcionario_nombre: currentUser ? currentUser.nombre_usuario : 'Administrador',
-        funcionario_rol: 'Administración Municipal',
-        modulo: 'Avisos',
-        accion: 'ELIMINACIÓN',
-        descripcion: `Retiró el aviso oficial #${id}${notice ? `: "${notice.titulo}"` : ''}`,
-        id_referencia: id
-      });
+    const notice = notices.find(n => n.id_aviso === id);
+    setDeleteTarget({
+      type: 'aviso',
+      id,
+      title: notice ? notice.titulo : `Aviso #${id}`,
+      subtitle: notice ? notice.descripcion : undefined,
+      categoryOrSector: notice ? `Sector: ${notice.sector_afectado}` : undefined,
+      date: notice ? `Publicado: ${notice.fecha_publicacion}` : undefined
+    });
+  };
+
+  const handleExecuteConfirmDelete = async (target: DeleteTargetInfo) => {
+    try {
+      if (target.type === 'evento') {
+        const ev = events.find(e => e.id_evento === target.id);
+        setEvents(prev => prev.filter(e => e.id_evento !== target.id));
+        OfflineStorageManager.saveCache(
+          STORAGE_KEYS.EVENTS, 
+          events.filter(e => e.id_evento !== target.id)
+        );
+        await ApiClientAdapter.deleteEvent(target.id);
+        await addAuditLog({
+          funcionario_nombre: currentUser ? currentUser.nombre_usuario : 'Administrador',
+          funcionario_rol: 'Administración Municipal',
+          modulo: 'Eventos',
+          accion: 'ELIMINACIÓN',
+          descripcion: `Eliminó el evento #${target.id}${ev ? `: "${ev.nombre}"` : ''}`,
+          id_referencia: target.id
+        });
+        showToast(`✓ Evento "${target.title}" eliminado correctamente`);
+      } else if (target.type === 'aviso') {
+        const notice = notices.find(n => n.id_aviso === target.id);
+        setNotices(prev => prev.filter(n => n.id_aviso !== target.id));
+        OfflineStorageManager.saveCache(
+          STORAGE_KEYS.NOTICES, 
+          notices.filter(n => n.id_aviso !== target.id)
+        );
+        await ApiClientAdapter.deleteNotice(target.id);
+        await addAuditLog({
+          funcionario_nombre: currentUser ? currentUser.nombre_usuario : 'Administrador',
+          funcionario_rol: 'Administración Municipal',
+          modulo: 'Avisos',
+          accion: 'ELIMINACIÓN',
+          descripcion: `Retiró el aviso oficial #${target.id}${notice ? `: "${notice.titulo}"` : ''}`,
+          id_referencia: target.id
+        });
+        showToast(`✓ Aviso "${target.title}" retirado correctamente`);
+      }
       await loadAllData();
+    } catch (err) {
+      console.error('Error during deletion:', err);
+      showToast('⚠️ Hubo un problema al procesar la eliminación.');
     }
   };
 
@@ -659,6 +700,7 @@ export default function App() {
               onExploreNotices={() => setActiveTab('avisos')}
               onExploreOperations={() => setActiveTab('operaciones')}
               onExploreTurismo={() => setActiveTab('turismo')}
+              onExploreReportar={() => setActiveTab('reportar')}
               onOpenEmergencies={() => setShowEmergenciesModal(true)}
               onOpenAssistant={() => setShowAssistantModal(true)}
               onOpenServicesGuide={() => setShowServicesGuideModal(true)}
@@ -676,6 +718,7 @@ export default function App() {
               onOpenEmergencies={() => setShowEmergenciesModal(true)}
               onOpenServicesGuide={() => setShowServicesGuideModal(true)}
               onOpenOpsDashboard={() => setActiveTab('operaciones')}
+              onOpenReportar={() => setActiveTab('reportar')}
             />
 
             {/* Citizen Participatory Poll / Presupuesto Participativo */}
@@ -763,6 +806,21 @@ export default function App() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* TAB: REPORTAR FALLA CIUDADANA (Fiel al diseño interactivo solicitado) */}
+        {(activeTab === 'reportar' || activeTab === 'reportar-falla') && (
+          <Suspense fallback={<DashboardCardSkeleton />}>
+            <ReportarFallaScreen 
+              currentUser={currentUser}
+              onNavigateToTab={(tab) => setActiveTab(tab)}
+              onLogout={handleLogoutUser}
+              onOpenAuth={() => setShowAuthModal(true)}
+              onOpenServicesGuide={() => setShowServicesGuideModal(true)}
+              onOpenAssistant={() => setShowAssistantModal(true)}
+              onOpenEmergencies={() => setShowEmergenciesModal(true)}
+            />
+          </Suspense>
         )}
 
         {/* TAB: CENTRO DE CONTROL & OPERACIONES MUNICIPALES (Lazy Loaded) */}
@@ -1097,6 +1155,11 @@ export default function App() {
           onClose={() => setSelectedEvent(null)}
           isSaved={savedEventIds.includes(selectedEvent.id_evento)}
           onToggleSave={handleToggleSave}
+          onDeleteEvent={handleDeleteEvent}
+          canDelete={
+            currentUser?.rol === 'administrador' || 
+            (currentUser?.rol === 'organizador' && organizers.some(o => o.id_usuario === currentUser?.id_usuario && o.id_organizador === selectedEvent.id_organizador))
+          }
         />
       )}
 
@@ -1154,6 +1217,15 @@ export default function App() {
       <FloatingActionsMenu
         onOpenAssistant={() => setShowAssistantModal(true)}
         onOpenEmergencies={() => setShowEmergenciesModal(true)}
+        onOpenReportar={() => setActiveTab('reportar')}
+      />
+
+      {/* Confirmation Modal for Permanent Event & Notice Deletion */}
+      <ConfirmDeleteModal
+        isOpen={!!deleteTarget}
+        target={deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleExecuteConfirmDelete}
       />
     </div>
   );
