@@ -215,7 +215,7 @@ export interface JornadaSaludEsterilizacion {
 // ==========================================
 
 export type TipoFalla = 'agua' | 'luz' | 'aseo' | 'vias';
-export type EstadoFalla = 'pendiente' | 'en_revision' | 'cuadrilla_asignada' | 'en_reparacion' | 'resuelto';
+export type EstadoFalla = 'pendiente' | 'notificado' | 'solucionado' | 'en_revision' | 'cuadrilla_asignada' | 'en_reparacion' | 'resuelto';
 
 export interface ReporteFallaCiudadana {
   id_falla: number;
@@ -297,6 +297,7 @@ export type AccionAuditoria =
   | 'CIERRE_INCIDENCIA'
   | 'REGISTRO_INSCRIPCIÓN'
   | 'REPORTE_CIUDADANO'
+  | 'SOLUCIONADO_Y_BORRADO'
   | 'VOTO_ENCUESTA';
 
 export interface RegistroAuditoria {

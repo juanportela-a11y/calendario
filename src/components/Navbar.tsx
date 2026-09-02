@@ -22,6 +22,7 @@ import {
   Store,
   Compass,
   ChevronDown,
+  ChevronRight,
   Settings,
   Megaphone
 } from 'lucide-react';
@@ -257,33 +258,24 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span>Inicio</span>
             </button>
 
-            {/* 2. Reportar Falla (Destacado Cívico) */}
-            <button
-              onClick={() => setActiveTab('reportar')}
-              className={`relative px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                activeTab === 'reportar' || activeTab === 'reportar-falla'
-                  ? 'bg-[#2563EB] text-white shadow-xs scale-[1.02]'
-                  : 'bg-blue-50/90 dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200/80 dark:border-blue-800/80'
-              }`}
-            >
-              <Megaphone className={`w-3.5 h-3.5 ${activeTab === 'reportar' ? 'text-white' : 'text-[#2563EB] dark:text-blue-400'}`} />
-              <span>Reportar Falla</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-            </button>
-
-            {/* 3. Menú Desplegable Completo de Secciones */}
+            {/* 2. Menú Desplegable Completo de Secciones (Incluye Reportar Falla) */}
             <div className="relative" ref={navMenuRef}>
               <button
                 type="button"
                 onClick={() => setNavMenuOpen(!navMenuOpen)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                  navMenuOpen || ['calendario', 'operaciones', 'turismo', 'avisos', 'panel-organizador', 'panel-admin'].includes(activeTab)
+                  navMenuOpen || ['reportar', 'reportar-falla', 'calendario', 'operaciones', 'turismo', 'avisos', 'panel-organizador', 'panel-admin'].includes(activeTab)
                     ? 'bg-blue-600 text-white shadow-xs'
                     : 'text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-700/60'
                 }`}
               >
                 <Menu className="w-3.5 h-3.5" />
                 <span>Menú de Servicios</span>
+                {activeTab === 'reportar' && (
+                  <span className="px-1.5 py-0.2 bg-amber-400 text-slate-950 font-black text-[9px] rounded-full">
+                    Fallas
+                  </span>
+                )}
                 <ChevronDown className={`w-3 h-3 transition-transform ${navMenuOpen ? 'rotate-180' : ''}`} />
               </button>
 
@@ -291,6 +283,40 @@ export const Navbar: React.FC<NavbarProps> = ({
               {navMenuOpen && (
                 <div className="absolute left-0 mt-2 w-80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-3 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                   
+                  {/* Destacado: Reportar Falla Ciudadana */}
+                  <div className="pb-1 border-b border-slate-100 dark:border-slate-800">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2 block mb-1">
+                      Atención Ciudadana
+                    </span>
+                    <button
+                      onClick={() => {
+                        setActiveTab('reportar');
+                        setNavMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        activeTab === 'reportar' || activeTab === 'reportar-falla'
+                          ? 'bg-[#2563EB] text-white shadow-xs'
+                          : 'bg-blue-50/90 dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200/80 dark:border-blue-800/80'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${activeTab === 'reportar' ? 'bg-white/20 text-white' : 'bg-[#2563EB] text-white shadow-xs'}`}>
+                          <Megaphone className="w-4 h-4" />
+                        </div>
+                        <div className="text-left">
+                          <div className="flex items-center gap-1.5">
+                            <span className="block font-black">Reportar Falla</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                          </div>
+                          <span className={`text-[10px] font-normal ${activeTab === 'reportar' ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'}`}>
+                            Agua, luz, aseo o vías dañadas (+30 pts)
+                          </span>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-3.5 h-3.5 opacity-70" />
+                    </button>
+                  </div>
+
                   {/* Categoría: Agenda & Eventos */}
                   <div>
                     <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2 block mb-1">

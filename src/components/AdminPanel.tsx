@@ -21,9 +21,19 @@ import {
   RefreshCw,
   Award,
   MapPin,
-  Phone
+  Phone,
+  Megaphone,
+  Droplets,
+  Zap,
+  Trash,
+  ExternalLink,
+  MessageSquare,
+  Camera,
+  CheckSquare,
+  AlertCircle,
+  X
 } from 'lucide-react';
-import { Aviso, Categoria, CreateAvisoDTO, CreateEventoDTO, Evento, Organizador, Usuario, ReporteVia, CorteProgramado } from '../types';
+import { Aviso, Categoria, CreateAvisoDTO, CreateEventoDTO, Evento, Organizador, Usuario, ReporteVia, CorteProgramado, ReporteFallaCiudadana, EstadoFalla } from '../types';
 import { useOpsStore } from '../stores/useOpsStore';
 import { CUADRILLAS_MUNICIPALES } from '../data/municipalOpsData';
 import { exportAuditLogsToCSV, exportCortesToCSV, exportViasToCSV, generateMunicipalOpsPDF } from '../utils/exportUtils';
@@ -67,10 +77,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onRefreshAll,
   onUpdateUserRole
 }) => {
-  const [activeTab, setActiveTab] = useState<'eventos' | 'avisos' | 'despacho_cuadrillas' | 'lectura_avisos' | 'encuestas_admin' | 'auditoria' | 'usuarios' | 'despacho_notificaciones'>('eventos');
+  const [activeTab, setActiveTab] = useState<'eventos' | 'reportes_fallas' | 'avisos' | 'despacho_cuadrillas' | 'lectura_avisos' | 'encuestas_admin' | 'auditoria' | 'usuarios' | 'despacho_notificaciones'>('eventos');
   const [search, setSearch] = useState('');
   const [userRoleFilter, setUserRoleFilter] = useState<string>('todos');
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Fallas filter & management state
+  const [fallaTipoFilter, setFallaTipoFilter] = useState<'todos' | 'agua' | 'luz' | 'aseo' | 'vias'>('todos');
+  const [fallaEstadoFilter, setFallaEstadoFilter] = useState<'todos' | 'pendiente' | 'notificado' | 'solucionado'>('todos');
+  const [autoDeleteOnSolucionado, setAutoDeleteOnSolucionado] = useState<boolean>(true);
+  const [selectedFallaModal, setSelectedFallaModal] = useState<ReporteFallaCiudadana | null>(null);
+  const [respuestaOficialInput, setRespuestaOficialInput] = useState<string>('');
+  const [previewFotoUrl, setPreviewFotoUrl] = useState<string | null>(null);
 
   // Notification form state
   const [notifTitulo, setNotifTitulo] = useState('');
@@ -99,7 +117,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     notifiedUsers, 
     encuestas, 
     addCustomEncuesta, 
-    deleteCustomEncuesta 
+    deleteCustomEncuesta,
+    fallas,
+    updateFallaEstado,
+    deleteReporteFalla
   } = useOpsStore();
 
   const handleSendNotif = async (e: React.FormEvent) => {
@@ -276,6 +297,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0">
           {[
             { id: 'eventos', label: `Eventos (${events.length})`, icon: Calendar },
+            { id: 'reportes_fallas', label: `Reportes Ciudadanos (${fallas.length})`, icon: Megaphone, highlight: fallas.filter(f => f.estado === 'pendiente').length > 0 },
             { id: 'despacho_cuadrillas', label: `Despacho de Cuadrillas (${vias.length})`, icon: HardHat },
             { id: 'despacho_notificaciones', label: 'Enviar Notificación', icon: Bell },
             { id: 'lectura_avisos', label: `Lectura de Avisos (${notifiedUsers.length})`, icon: CheckCircle2 },
@@ -290,7 +312,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap relative ${
                   isActive
                     ? 'bg-[#0D47A1] dark:bg-blue-600 text-white shadow-sm'
                     : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-750'
@@ -298,6 +320,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               >
                 <Icon className="w-4 h-4" />
                 <span>{tab.label}</span>
+                {tab.highlight && !isActive && (
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse absolute top-1.5 right-1.5" />
+                )}
               </button>
             );
           })}
@@ -317,6 +342,407 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
       {/* Tab Content */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        
+        {/* TAB 0: GESTIÓN DE REPORTES CIUDADANOS (AGUA, LUZ, ASEO, VÍAS) */}
+        {activeTab === 'reportes_fallas' && (
+          <div className="p-6 space-y-6">
+            {/* Header & Controls */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <Megaphone className="w-5 h-5 text-blue-600" />
+                  <span>Gestión y Resolución de Reportes Ciudadanos</span>
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Los reportes ingresan por defecto en estado <strong className="text-amber-600 dark:text-amber-400">Pendiente</strong>. Cámbielos a <strong className="text-blue-600 dark:text-blue-400">Notificado</strong> o <strong className="text-emerald-600 dark:text-emerald-400">Solucionado</strong>.
+                </p>
+              </div>
+
+              {/* Auto-delete toggle on Solucionado */}
+              <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/80 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 self-start lg:self-auto">
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-200">
+                  <input
+                    type="checkbox"
+                    checked={autoDeleteOnSolucionado}
+                    onChange={(e) => setAutoDeleteOnSolucionado(e.target.checked)}
+                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
+                  />
+                  <span>Borrar automáticamente al marcar como «Solucionado»</span>
+                </label>
+                <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-extrabold uppercase">
+                  {autoDeleteOnSolucionado ? 'Auto-limpieza Activa' : 'Conservar en BD'}
+                </span>
+              </div>
+            </div>
+
+            {/* Quick Stats & Sub-Filters */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block">Total Recibidos</span>
+                <span className="text-xl font-black text-slate-900 dark:text-white">{fallas.length}</span>
+              </div>
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-2xl border border-amber-200/80 dark:border-amber-900/40">
+                <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400 block">🟡 Pendientes</span>
+                <span className="text-xl font-black text-amber-900 dark:text-amber-200">
+                  {fallas.filter(f => f.estado === 'pendiente').length}
+                </span>
+              </div>
+              <div className="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-2xl border border-blue-200/80 dark:border-blue-900/40">
+                <span className="text-[11px] font-bold text-blue-700 dark:text-blue-400 block">🔵 Notificados</span>
+                <span className="text-xl font-black text-blue-900 dark:text-blue-200">
+                  {fallas.filter(f => f.estado === 'notificado' || f.estado === 'en_revision' || f.estado === 'cuadrilla_asignada' || f.estado === 'en_reparacion').length}
+                </span>
+              </div>
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-200/80 dark:border-emerald-900/40">
+                <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 block">🟢 Solucionados</span>
+                <span className="text-xl font-black text-emerald-900 dark:text-emerald-200">
+                  {fallas.filter(f => f.estado === 'solucionado' || f.estado === 'resuelto').length}
+                </span>
+              </div>
+            </div>
+
+            {/* Filters Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-700/80">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-xs font-bold text-slate-500 mr-1">Servicio:</span>
+                {(['todos', 'agua', 'luz', 'aseo', 'vias'] as const).map((tipo) => (
+                  <button
+                    key={tipo}
+                    onClick={() => setFallaTipoFilter(tipo)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
+                      fallaTipoFilter === tipo
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    {tipo === 'todos' ? 'Todos los Servicios' : tipo === 'agua' ? '💧 Agua' : tipo === 'luz' ? '⚡ Luz' : tipo === 'aseo' ? '🗑️ Aseo' : '🛣️ Vías'}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-xs font-bold text-slate-500 mr-1">Estado:</span>
+                {(['todos', 'pendiente', 'notificado', 'solucionado'] as const).map((st) => (
+                  <button
+                    key={st}
+                    onClick={() => setFallaEstadoFilter(st)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
+                      fallaEstadoFilter === st
+                        ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
+                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    {st === 'todos' ? 'Todos los Estados' : st}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Reports List / Table */}
+            {fallas.length === 0 ? (
+              <div className="text-center py-12 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+                <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                  ¡Bandeja de reportes despejada!
+                </p>
+                <p className="text-xs text-slate-400 mt-1">
+                  No hay reportes de fallas pendientes o todos los casos han sido solucionados y eliminados.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {fallas
+                  .filter(f => {
+                    const matchesSearch = 
+                      f.descripcion.toLowerCase().includes(search.toLowerCase()) ||
+                      f.barrio.toLowerCase().includes(search.toLowerCase()) ||
+                      f.ubicacion.toLowerCase().includes(search.toLowerCase()) ||
+                      (f.nombre_ciudadano && f.nombre_ciudadano.toLowerCase().includes(search.toLowerCase())) ||
+                      (f.telefono_ciudadano && f.telefono_ciudadano.includes(search));
+                    
+                    const matchesTipo = fallaTipoFilter === 'todos' || f.tipo === fallaTipoFilter;
+                    
+                    const matchesEstado = 
+                      fallaEstadoFilter === 'todos' ||
+                      (fallaEstadoFilter === 'pendiente' && f.estado === 'pendiente') ||
+                      (fallaEstadoFilter === 'notificado' && (f.estado === 'notificado' || f.estado === 'en_revision' || f.estado === 'cuadrilla_asignada' || f.estado === 'en_reparacion')) ||
+                      (fallaEstadoFilter === 'solucionado' && (f.estado === 'solucionado' || f.estado === 'resuelto'));
+
+                    return matchesSearch && matchesTipo && matchesEstado;
+                  })
+                  .map((falla) => {
+                    const isPendiente = falla.estado === 'pendiente';
+                    const isNotificado = falla.estado === 'notificado' || falla.estado === 'en_revision' || falla.estado === 'cuadrilla_asignada' || falla.estado === 'en_reparacion';
+                    const isSolucionado = falla.estado === 'solucionado' || falla.estado === 'resuelto';
+
+                    return (
+                      <div
+                        key={falla.id_falla}
+                        className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs hover:border-blue-300 dark:hover:border-blue-700 transition-all space-y-4"
+                      >
+                        <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
+                          <div className="flex items-start gap-3">
+                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-xs ${
+                              falla.tipo === 'agua'
+                                ? 'bg-cyan-100 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300'
+                                : falla.tipo === 'luz'
+                                ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300'
+                                : falla.tipo === 'aseo'
+                                ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
+                                : 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300'
+                            }`}>
+                              {falla.tipo === 'agua' && <Droplets className="w-5 h-5" />}
+                              {falla.tipo === 'luz' && <Zap className="w-5 h-5" />}
+                              {falla.tipo === 'aseo' && <Trash className="w-5 h-5" />}
+                              {falla.tipo === 'vias' && <HardHat className="w-5 h-5" />}
+                            </div>
+
+                            <div className="space-y-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-xs font-black uppercase px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
+                                  ID #{falla.id_falla} • {falla.tipo.toUpperCase()}
+                                </span>
+                                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                                  {falla.fecha_reporte}
+                                </span>
+                                {falla.empresa_responsable && (
+                                  <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-800">
+                                    {falla.empresa_responsable}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+                                {falla.descripcion}
+                              </p>
+                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400 pt-1">
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="w-3.5 h-3.5 text-rose-500" />
+                                  <strong className="text-slate-700 dark:text-slate-300">{falla.barrio}</strong> ({falla.ubicacion})
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Users className="w-3.5 h-3.5 text-blue-500" />
+                                  {falla.nombre_ciudadano}
+                                  {falla.telefono_ciudadano && (
+                                    <span className="font-mono text-slate-600 dark:text-slate-300 ml-1">
+                                      📞 {falla.telefono_ciudadano}
+                                    </span>
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Foto thumbnail if available */}
+                          {falla.foto_url && (
+                            <button
+                              onClick={() => setPreviewFotoUrl(falla.foto_url || null)}
+                              className="relative group w-20 h-20 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0 self-start cursor-pointer"
+                              title="Ver fotografía adjunta"
+                            >
+                              <img
+                                src={falla.foto_url}
+                                alt="Evidencia reporte"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                              />
+                              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-[10px] font-bold">
+                                <Camera className="w-4 h-4 mr-1" /> Ver
+                              </div>
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Official Response note if exists */}
+                        {falla.respuesta_oficial && (
+                          <div className="p-3 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/40 text-xs text-blue-900 dark:text-blue-200 flex items-start gap-2">
+                            <MessageSquare className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                            <div>
+                              <strong className="block font-bold">Respuesta Oficial Notificada a la Comunidad:</strong>
+                              <span>{falla.respuesta_oficial}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Interactive Status Selector & Auto-Delete Action Bar */}
+                        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-50/70 dark:bg-slate-800/40 p-3 rounded-xl">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                              Cambiar Estado:
+                            </span>
+
+                            {/* Option 1: PENDIENTE */}
+                            <button
+                              onClick={() => updateFallaEstado(falla.id_falla, 'pendiente')}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                isPendiente
+                                  ? 'bg-amber-500 text-white shadow-xs font-black ring-2 ring-amber-300'
+                                  : 'bg-white dark:bg-slate-800 text-amber-700 dark:text-amber-400 border border-amber-200 hover:bg-amber-50'
+                              }`}
+                            >
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>Pendiente</span>
+                            </button>
+
+                            {/* Option 2: NOTIFICADO */}
+                            <button
+                              onClick={() => {
+                                setSelectedFallaModal(falla);
+                                setRespuestaOficialInput(falla.respuesta_oficial || 'Reporte notificado formalmente a la cuadrilla de atención técnica.');
+                              }}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                isNotificado
+                                  ? 'bg-blue-600 text-white shadow-xs font-black ring-2 ring-blue-300'
+                                  : 'bg-white dark:bg-slate-800 text-blue-700 dark:text-blue-400 border border-blue-200 hover:bg-blue-50'
+                              }`}
+                            >
+                              <Bell className="w-3.5 h-3.5" />
+                              <span>Notificado {falla.cuadrilla_asignada ? `(${falla.cuadrilla_asignada})` : ''}</span>
+                            </button>
+
+                            {/* Option 3: SOLUCIONADO */}
+                            <button
+                              onClick={() => updateFallaEstado(falla.id_falla, 'solucionado', falla.respuesta_oficial || 'Falla reparada satisfactoriamente en terreno.', autoDeleteOnSolucionado)}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                isSolucionado
+                                  ? 'bg-emerald-600 text-white shadow-xs font-black ring-2 ring-emerald-300'
+                                  : 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 border border-emerald-200 hover:bg-emerald-50'
+                              }`}
+                              title={autoDeleteOnSolucionado ? 'Marca como solucionado y elimina automáticamente' : 'Marca como solucionado'}
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Solucionado {autoDeleteOnSolucionado ? '(& Borrar)' : ''}</span>
+                            </button>
+                          </div>
+
+                          {/* Quick direct action buttons */}
+                          <div className="flex items-center gap-2">
+                            {/* Direct: Solucionar y Borrar Automáticamente */}
+                            <button
+                              onClick={() => updateFallaEstado(falla.id_falla, 'solucionado', 'Falla atendida y reparada por la cuadrilla municipal.', true)}
+                              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                              title="Marca la falla como solucionada y la elimina automáticamente del panel"
+                            >
+                              <CheckSquare className="w-3.5 h-3.5" />
+                              <span>Solucionar y Borrar</span>
+                            </button>
+
+                            {/* Direct: Delete Report */}
+                            <button
+                              onClick={() => {
+                                if (window.confirm(`¿Está seguro de eliminar permanentemente el reporte #${falla.id_falla}?`)) {
+                                  deleteReporteFalla(falla.id_falla);
+                                }
+                              }}
+                              className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-all cursor-pointer"
+                              title="Eliminar reporte"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+
+            {/* Modal para Notificar a Cuadrilla y Responder al Ciudadano */}
+            {selectedFallaModal && (
+              <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+                <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900 text-blue-600 flex items-center justify-center font-bold text-xs">
+                        #{selectedFallaModal.id_falla}
+                      </div>
+                      <h4 className="text-sm font-black text-slate-900 dark:text-white">
+                        Notificar Cuadrilla & Actualizar Estado
+                      </h4>
+                    </div>
+                    <button
+                      onClick={() => setSelectedFallaModal(null)}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-xs space-y-1">
+                    <p className="font-bold text-slate-800 dark:text-slate-200">
+                      {selectedFallaModal.descripcion}
+                    </p>
+                    <p className="text-slate-500">
+                      Ubicación: {selectedFallaModal.barrio} ({selectedFallaModal.ubicacion})
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Respuesta Oficial / Instrucción a Cuadrilla:
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={respuestaOficialInput}
+                      onChange={(e) => setRespuestaOficialInput(e.target.value)}
+                      placeholder="Ej: Cuadrilla de fontanería EMPOPUR despachada al sitio. Hora estimada de llegada: 2:30 PM..."
+                      className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <button
+                      onClick={() => setSelectedFallaModal(null)}
+                      className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={() => {
+                        updateFallaEstado(
+                          selectedFallaModal.id_falla,
+                          'notificado',
+                          respuestaOficialInput.trim() || 'Reporte notificado a la cuadrilla de atención técnica.'
+                        );
+                        setSelectedFallaModal(null);
+                      }}
+                      className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black shadow-md cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>Guardar y Marcar Notificado</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Modal para Visualizar Fotografía */}
+            {previewFotoUrl && (
+              <div 
+                onClick={() => setPreviewFotoUrl(null)}
+                className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 cursor-pointer"
+              >
+                <div 
+                  onClick={(e) => e.stopPropagation()} 
+                  className="bg-white dark:bg-slate-900 max-w-2xl w-full rounded-3xl overflow-hidden shadow-2xl border border-slate-700 p-4 space-y-3"
+                >
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+                    <span className="text-xs font-black text-slate-900 dark:text-white">Fotografía de Evidencia Adjunta</span>
+                    <button
+                      onClick={() => setPreviewFotoUrl(null)}
+                      className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <img
+                    src={previewFotoUrl}
+                    alt="Evidencia Reporte Ciudadano"
+                    className="w-full max-h-[70vh] object-contain rounded-xl bg-slate-950"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
         
         {/* TAB 1: DESPACHO Y ASIGNACIÓN DE CUADRILLAS */}
         {activeTab === 'despacho_cuadrillas' && (

@@ -85,7 +85,7 @@ interface OpsState {
 
   // Reportes de Falla Ciudadana (Direct UI)
   addReporteFalla: (data: Omit<ReporteFallaCiudadana, 'id_falla' | 'fecha_reporte' | 'estado'> & Partial<Pick<ReporteFallaCiudadana, 'estado' | 'fecha_reporte'>>) => Promise<ReporteFallaCiudadana>;
-  updateFallaEstado: (idFalla: number, nuevoEstado: EstadoFalla, respuestaOficial?: string, userMod?: string) => Promise<void>;
+  updateFallaEstado: (idFalla: number, nuevoEstado: EstadoFalla, respuestaOficial?: string, autoDeleteOnSolucionado?: boolean, userMod?: string) => Promise<void>;
   deleteReporteFalla: (idFalla: number, userMod?: string) => Promise<void>;
 
   // Domain Actions
@@ -935,7 +935,7 @@ export const useOpsStore = create<OpsState>((set, get) => ({
     return newReporte;
   },
 
-  updateFallaEstado: async (idFalla, nuevoEstado, respuestaOficial, userMod = 'Administrador') => {
+  updateFallaEstado: async (idFalla, nuevoEstado, respuestaOficial, autoDeleteOnSolucionado = false, userMod = 'Administrador') => {
     const { fallas, showToast } = get();
     const target = fallas.find(f => f.id_falla === idFalla);
     if (!target) return;
@@ -943,11 +943,41 @@ export const useOpsStore = create<OpsState>((set, get) => ({
     const now = new Date();
     const fechaFormatted = `${now.toISOString().split('T')[0]} ${now.toTimeString().slice(0, 5)}`;
     
+    const isSolucionado = nuevoEstado === 'solucionado' || nuevoEstado === 'resuelto';
+
+    if (isSolucionado && autoDeleteOnSolucionado) {
+      // Automatic deletion when marked as solucionado
+      set({ fallas: fallas.filter(f => f.id_falla !== idFalla) });
+      await deleteReporteFallaFromFirestore(idFalla);
+
+      const log: RegistroAuditoria = {
+        id_log: Date.now(),
+        timestamp: fechaFormatted,
+        funcionario_nombre: userMod,
+        funcionario_rol: 'Administración Municipal',
+        modulo: 'Ciudadanía',
+        accion: 'SOLUCIONADO_Y_BORRADO',
+        descripcion: `Reporte #${idFalla} marcado como SOLUCIONADO y borrado automáticamente del panel activo.`,
+        id_referencia: idFalla,
+        detalles_anteriores: `Estado: ${target.estado}`,
+        detalles_nuevos: `Estado: Solucionado & Eliminado automáticamente${respuestaOficial ? ` | Respuesta: ${respuestaOficial}` : ''}`
+      };
+
+      set((s) => ({
+        auditLogs: [log, ...s.auditLogs],
+        lastAuditSyncTime: now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      }));
+      await saveAuditLogToFirestore(log);
+
+      showToast(`✓ Reporte #${idFalla} marcado como Solucionado y eliminado automáticamente.`);
+      return;
+    }
+
     const updated: ReporteFallaCiudadana = {
       ...target,
       estado: nuevoEstado,
       respuesta_oficial: respuestaOficial !== undefined ? respuestaOficial : target.respuesta_oficial,
-      fecha_solucion: nuevoEstado === 'resuelto' ? fechaFormatted : target.fecha_solucion
+      fecha_solucion: isSolucionado ? fechaFormatted : target.fecha_solucion
     };
 
     set({ fallas: fallas.map(f => f.id_falla === idFalla ? updated : f) });
