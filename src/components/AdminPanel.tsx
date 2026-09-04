@@ -88,6 +88,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [autoDeleteOnSolucionado, setAutoDeleteOnSolucionado] = useState<boolean>(true);
   const [selectedFallaModal, setSelectedFallaModal] = useState<ReporteFallaCiudadana | null>(null);
   const [respuestaOficialInput, setRespuestaOficialInput] = useState<string>('');
+  const [cuadrillaAsignadaInput, setCuadrillaAsignadaInput] = useState<string>('');
+  const [fallaModalEstado, setFallaModalEstado] = useState<EstadoFalla>('notificado');
   const [previewFotoUrl, setPreviewFotoUrl] = useState<string | null>(null);
 
   // Notification form state
@@ -582,11 +584,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                               <span>Pendiente</span>
                             </button>
 
-                            {/* Option 2: NOTIFICADO */}
+                            {/* Option 2: NOTIFICADO Y ASIGNAR CUADRILLA */}
                             <button
                               onClick={() => {
                                 setSelectedFallaModal(falla);
-                                setRespuestaOficialInput(falla.respuesta_oficial || 'Reporte notificado formalmente a la cuadrilla de atención técnica.');
+                                setRespuestaOficialInput(falla.respuesta_oficial || 'Reporte notificado formalmente a la cuadrilla de atención técnica municipal.');
+                                setCuadrillaAsignadaInput(falla.cuadrilla_asignada || CUADRILLAS_MUNICIPALES[0]);
+                                setFallaModalEstado(falla.estado === 'pendiente' ? 'cuadrilla_asignada' : falla.estado);
                               }}
                               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                                 isNotificado
@@ -594,8 +598,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                                   : 'bg-white dark:bg-slate-800 text-blue-700 dark:text-blue-400 border border-blue-200 hover:bg-blue-50'
                               }`}
                             >
-                              <Bell className="w-3.5 h-3.5" />
-                              <span>Notificado {falla.cuadrilla_asignada ? `(${falla.cuadrilla_asignada})` : ''}</span>
+                              <HardHat className="w-3.5 h-3.5" />
+                              <span>{falla.cuadrilla_asignada ? `Cuadrilla: ${falla.cuadrilla_asignada.split(' - ')[0]}` : 'Asignar Cuadrilla'}</span>
                             </button>
 
                             {/* Option 3: SOLUCIONADO */}
@@ -675,15 +679,49 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     </p>
                   </div>
 
-                  <div className="space-y-2">
+                  {/* Cuadrilla selector */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <HardHat className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Cuadrilla Responsable Despachada:</span>
+                    </label>
+                    <select
+                      value={cuadrillaAsignadaInput}
+                      onChange={(e) => setCuadrillaAsignadaInput(e.target.value)}
+                      className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {CUADRILLAS_MUNICIPALES.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Estado selector */}
+                  <div className="space-y-1.5">
                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Respuesta Oficial / Instrucción a Cuadrilla:
+                      Nuevo Estado del Reporte:
+                    </label>
+                    <select
+                      value={fallaModalEstado}
+                      onChange={(e) => setFallaModalEstado(e.target.value as EstadoFalla)}
+                      className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="notificado">Notificado a Cuadrilla Técnica</option>
+                      <option value="cuadrilla_asignada">Cuadrilla Asignada y en Ruta</option>
+                      <option value="en_reparacion">En Reparación / En Proceso</option>
+                      <option value="solucionado">Solucionado / Resuelto</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Respuesta Oficial al Ciudadano:
                     </label>
                     <textarea
                       rows={3}
                       value={respuestaOficialInput}
                       onChange={(e) => setRespuestaOficialInput(e.target.value)}
-                      placeholder="Ej: Cuadrilla de fontanería EMPOPUR despachada al sitio. Hora estimada de llegada: 2:30 PM..."
+                      placeholder="Ej: Cuadrilla técnica despachada al sector con herramientas de reparación..."
                       className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -699,15 +737,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       onClick={() => {
                         updateFallaEstado(
                           selectedFallaModal.id_falla,
-                          'notificado',
-                          respuestaOficialInput.trim() || 'Reporte notificado a la cuadrilla de atención técnica.'
+                          fallaModalEstado,
+                          respuestaOficialInput.trim() || 'Reporte notificado a la cuadrilla de atención técnica.',
+                          false,
+                          'Administrador Municipal',
+                          cuadrillaAsignadaInput
                         );
                         setSelectedFallaModal(null);
                       }}
                       className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black shadow-md cursor-pointer flex items-center gap-1.5"
                     >
                       <Check className="w-4 h-4" />
-                      <span>Guardar y Marcar Notificado</span>
+                      <span>Asignar Cuadrilla & Notificar Ciudadano</span>
                     </button>
                   </div>
                 </div>

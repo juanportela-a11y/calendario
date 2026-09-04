@@ -21,7 +21,7 @@ import {
   RefreshCw,
   Send
 } from 'lucide-react';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../firebase';
 import { CategoryCode, UserRole, Usuario } from '../types';
 import { ApiClientAdapter } from '../adapters/apiClient';
@@ -330,24 +330,46 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setErrorMessage(null);
     setSuccessMessage(null);
 
-    if (!forgotEmail.trim()) {
+    const email = forgotEmail.trim();
+    if (!email) {
       setErrorMessage('Ingresa el correo electrónico asociado a tu cuenta.');
       return;
     }
 
     setLoading(true);
+    let emailDispatched = false;
+
     try {
-      const res = await ApiClientAdapter.requestPasswordReset(forgotEmail.trim());
+      // 1. Send real password reset email via Firebase Auth
+      await sendPasswordResetEmail(auth, email);
+      emailDispatched = true;
+      setSuccessMessage(`¡Correo de restablecimiento enviado a ${email}! Revisa tu bandeja de entrada o spam para restablecer tu contraseña con el enlace seguro.`);
+    } catch (fbErr: any) {
+      console.warn('Firebase sendPasswordResetEmail notice:', fbErr?.code || fbErr);
+      if (fbErr?.code === 'auth/user-not-found') {
+        setErrorMessage('No encontramos ninguna cuenta registrada con este correo electrónico.');
+        setLoading(false);
+        return;
+      }
+    }
+
+    // 2. Also register token via backend adapter for immediate code verification
+    try {
+      const res = await ApiClientAdapter.requestPasswordReset(email);
       if (res.success) {
         setGeneratedToken(res.token || null);
         if (res.token) setRecoveryCode(res.token);
-        setSuccessMessage(res.message);
+        if (!emailDispatched) {
+          setSuccessMessage(res.message);
+        }
         setResetStep('verify');
-      } else {
-        setErrorMessage('No se pudo generar el código. Verifica el correo.');
+      } else if (!emailDispatched) {
+        setErrorMessage('No se pudo procesar la recuperación de contraseña.');
       }
     } catch (err: any) {
-      setErrorMessage(err.message || 'Error al procesar la solicitud.');
+      if (!emailDispatched) {
+        setErrorMessage(err.message || 'Error al procesar la solicitud.');
+      }
     } finally {
       setLoading(false);
     }

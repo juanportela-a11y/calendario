@@ -34,6 +34,7 @@ import {
   Flame
 } from 'lucide-react';
 import { useOpsStore } from '../../stores/useOpsStore';
+import { ApiClientAdapter } from '../../adapters/apiClient';
 import { EMERGENCY_CONTACTS, RUTAS_ASEO, TRAMITES_MUNICIPALES, RIO_MAGDALENA_STATUS, FARMACIAS_TURNO } from '../../data/municipalServicesData';
 import { INITIAL_EVENTS } from '../../data/initialData';
 
@@ -42,6 +43,7 @@ interface Message {
   sender: 'bot' | 'user';
   text: string;
   timestamp: string;
+  modelName?: string;
   quickReplies?: string[];
   actionLink?: {
     tab?: string;
@@ -463,7 +465,7 @@ export const PurifiGuiaAssistantModal: React.FC<PurifiGuiaAssistantModalProps> =
     };
   };
 
-  const handleSend = (textToSend?: string) => {
+  const handleSend = async (textToSend?: string) => {
     const text = textToSend || inputValue;
     if (!text.trim()) return;
 
@@ -478,14 +480,72 @@ export const PurifiGuiaAssistantModal: React.FC<PurifiGuiaAssistantModalProps> =
     setInputValue('');
     setIsTyping(true);
 
-    setTimeout(() => {
+    const q = text.toLowerCase();
+    const isInteractiveWidgetQuery = 
+      q.includes('trivia') || q.includes('quiz') || q.includes('juego') ||
+      q.includes('predial') || q.includes('descuento') || q.includes('simular') ||
+      q.includes('farmacia') || q.includes('turno') || q.includes('drogueria') ||
+      q.includes('basura') || q.includes('aseo') || q.includes('recoleccion') ||
+      q.includes('corte') || q.includes('luz') || q.includes('agua') ||
+      q.includes('via') || q.includes('bache') || q.includes('calle');
+
+    if (isInteractiveWidgetQuery) {
+      setTimeout(() => {
+        const botResponse = generateBotReply(text);
+        setMessages(prev => [...prev, botResponse]);
+        setIsTyping(false);
+        if (voiceEnabled) {
+          speakText(botResponse.text);
+        }
+      }, 350);
+      return;
+    }
+
+    // Call Real Gemini AI Agent via Backend API
+    try {
+      const historyPayload = messages.slice(-6).map(m => ({
+        role: m.sender === 'user' ? ('user' as const) : ('model' as const),
+        text: m.text
+      }));
+
+      const aiResponse = await ApiClientAdapter.askPurifiGuiaAi(text, historyPayload);
+
+      if (aiResponse && aiResponse.reply && !aiResponse.fallback) {
+        const botMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          sender: 'bot',
+          text: aiResponse.reply,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          modelName: 'Gemini 2.5 Flash',
+          quickReplies: [
+            '📋 ¿Qué requisitos pide el Sisbén IV?',
+            '🧮 Simular Descuento Predial',
+            '💧 Reportar fuga de agua',
+            '🚨 Teléfonos de emergencia 24h'
+          ]
+        };
+        setMessages(prev => [...prev, botMsg]);
+        if (voiceEnabled) {
+          speakText(botMsg.text);
+        }
+      } else {
+        // Fallback to local municipal knowledge base
+        const botResponse = generateBotReply(text);
+        setMessages(prev => [...prev, botResponse]);
+        if (voiceEnabled) {
+          speakText(botResponse.text);
+        }
+      }
+    } catch (err) {
+      console.warn('AI agent error, falling back to local KB:', err);
       const botResponse = generateBotReply(text);
       setMessages(prev => [...prev, botResponse]);
-      setIsTyping(false);
       if (voiceEnabled) {
         speakText(botResponse.text);
       }
-    }, 400);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleRateMessage = (msgId: string) => {
@@ -667,6 +727,12 @@ export const PurifiGuiaAssistantModal: React.FC<PurifiGuiaAssistantModalProps> =
                       : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-tl-xs border border-slate-200 dark:border-slate-700'
                   }`}
                 >
+                  {msg.modelName && (
+                    <div className="mb-2 flex items-center gap-1.5 text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-800 w-fit">
+                      <Sparkles className="w-3 h-3 text-indigo-500 animate-spin" />
+                      <span>Respuesta Asistida por {msg.modelName}</span>
+                    </div>
+                  )}
                   <p className="whitespace-pre-line">{msg.text}</p>
 
                   {/* Interactive Widget 1: Predial Calculator */}

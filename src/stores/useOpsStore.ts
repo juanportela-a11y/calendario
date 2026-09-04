@@ -42,9 +42,11 @@ import {
   saveNotifiedUserToFirestore,
   subscribeToReportesFallas,
   saveReporteFallaToFirestore,
-  deleteReporteFallaFromFirestore
+  deleteReporteFallaFromFirestore,
+  saveNotificacionToFirestore
 } from '../adapters/firebaseOpsAdapter';
 import { OfflineStorageManager, STORAGE_KEYS } from '../utils/offlineStorage';
+import { triggerLocalPush } from '../utils/notificationUtils';
 
 interface OpsState {
   vias: ReporteVia[];
@@ -85,7 +87,7 @@ interface OpsState {
 
   // Reportes de Falla Ciudadana (Direct UI)
   addReporteFalla: (data: Omit<ReporteFallaCiudadana, 'id_falla' | 'fecha_reporte' | 'estado'> & Partial<Pick<ReporteFallaCiudadana, 'estado' | 'fecha_reporte'>>) => Promise<ReporteFallaCiudadana>;
-  updateFallaEstado: (idFalla: number, nuevoEstado: EstadoFalla, respuestaOficial?: string, autoDeleteOnSolucionado?: boolean, userMod?: string) => Promise<void>;
+  updateFallaEstado: (idFalla: number, nuevoEstado: EstadoFalla, respuestaOficial?: string, autoDeleteOnSolucionado?: boolean, userMod?: string, cuadrillaAsignada?: string) => Promise<void>;
   deleteReporteFalla: (idFalla: number, userMod?: string) => Promise<void>;
 
   // Domain Actions
@@ -935,7 +937,7 @@ export const useOpsStore = create<OpsState>((set, get) => ({
     return newReporte;
   },
 
-  updateFallaEstado: async (idFalla, nuevoEstado, respuestaOficial, autoDeleteOnSolucionado = false, userMod = 'Administrador') => {
+  updateFallaEstado: async (idFalla, nuevoEstado, respuestaOficial, autoDeleteOnSolucionado = false, userMod = 'Administrador', cuadrillaAsignada?: string) => {
     const { fallas, showToast } = get();
     const target = fallas.find(f => f.id_falla === idFalla);
     if (!target) return;
@@ -969,7 +971,21 @@ export const useOpsStore = create<OpsState>((set, get) => ({
       }));
       await saveAuditLogToFirestore(log);
 
-      showToast(`✓ Reporte #${idFalla} marcado como Solucionado y eliminado automáticamente.`);
+      // Persist notification to citizen
+      const notifSol = {
+        id_notificacion: Date.now(),
+        id_usuario: target.id_usuario || 0,
+        titulo: `✅ ¡Tu reporte #${idFalla} ha sido SOLUCIONADO!`,
+        mensaje: `La falla reportada en ${target.barrio} (${target.tipo.toUpperCase()}) fue reparada satisfactoriamente por la administración municipal. ${respuestaOficial || ''}`,
+        fecha: new Date().toISOString(),
+        leida: false,
+        tipo_ref: 'reporte_falla',
+        id_ref: idFalla
+      };
+      await saveNotificacionToFirestore(notifSol);
+      triggerLocalPush(`✅ Reporte #${idFalla} Solucionado`, notifSol.mensaje, `falla-${idFalla}`);
+
+      showToast(`✓ Reporte #${idFalla} marcado como Solucionado y notificado al ciudadano.`);
       return;
     }
 
@@ -977,6 +993,7 @@ export const useOpsStore = create<OpsState>((set, get) => ({
       ...target,
       estado: nuevoEstado,
       respuesta_oficial: respuestaOficial !== undefined ? respuestaOficial : target.respuesta_oficial,
+      cuadrilla_asignada: cuadrillaAsignada !== undefined ? cuadrillaAsignada : target.cuadrilla_asignada,
       fecha_solucion: isSolucionado ? fechaFormatted : target.fecha_solucion
     };
 
@@ -990,10 +1007,10 @@ export const useOpsStore = create<OpsState>((set, get) => ({
       funcionario_rol: 'Administración Municipal',
       modulo: 'Ciudadanía',
       accion: 'ACTUALIZACIÓN_ESTADO',
-      descripcion: `Actualizó estado del reporte de falla #${idFalla} a [${nuevoEstado.toUpperCase()}].`,
+      descripcion: `Actualizó estado del reporte de falla #${idFalla} a [${nuevoEstado.toUpperCase()}]. Cuadrilla: ${cuadrillaAsignada || target.cuadrilla_asignada || 'Sin asignar'}.`,
       id_referencia: idFalla,
       detalles_anteriores: `Estado: ${target.estado}`,
-      detalles_nuevos: `Estado: ${nuevoEstado}${respuestaOficial ? ` | Respuesta: ${respuestaOficial}` : ''}`
+      detalles_nuevos: `Estado: ${nuevoEstado}${cuadrillaAsignada ? ` | Cuadrilla: ${cuadrillaAsignada}` : ''}${respuestaOficial ? ` | Respuesta: ${respuestaOficial}` : ''}`
     };
 
     set((s) => ({
@@ -1002,7 +1019,31 @@ export const useOpsStore = create<OpsState>((set, get) => ({
     }));
     await saveAuditLogToFirestore(log);
 
-    showToast(`✓ Reporte #${idFalla} actualizado a "${nuevoEstado}".`);
+    // Friendly labels for citizen notification
+    const statusLabels: Record<string, string> = {
+      'pendiente': 'Pendiente de Revisión',
+      'notificado': 'Notificado a Cuadrilla',
+      'cuadrilla_asignada': 'Cuadrilla Asignada y en Ruta',
+      'en_reparacion': 'En Reparación en Terreno',
+      'solucionado': 'Solucionado',
+      'resuelto': 'Resuelto'
+    };
+
+    const friendlyStatus = statusLabels[nuevoEstado] || nuevoEstado.toUpperCase();
+    const notifObj = {
+      id_notificacion: Date.now(),
+      id_usuario: target.id_usuario || 0,
+      titulo: `🔔 Actualización Reporte #${idFalla}: ${friendlyStatus}`,
+      mensaje: `Tu reporte de falla [${target.tipo.toUpperCase()}] en ${target.barrio} ahora está en: [${friendlyStatus}]. ${cuadrillaAsignada ? `Cuadrilla asignada: ${cuadrillaAsignada}. ` : ''}${respuestaOficial ? `Respuesta oficial: ${respuestaOficial}` : ''}`,
+      fecha: new Date().toISOString(),
+      leida: false,
+      tipo_ref: 'reporte_falla',
+      id_ref: idFalla
+    };
+    await saveNotificacionToFirestore(notifObj);
+    triggerLocalPush(notifObj.titulo, notifObj.mensaje, `falla-${idFalla}`);
+
+    showToast(`✓ Reporte #${idFalla} actualizado a "${friendlyStatus}" y notificado al ciudadano.`);
   },
 
   deleteReporteFalla: async (idFalla, userMod = 'Administrador') => {

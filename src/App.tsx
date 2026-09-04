@@ -46,7 +46,6 @@ import { CitizenQuickHub } from './components/home/CitizenQuickHub';
 import { HomeCitizenPollWidget } from './components/home/HomeCitizenPollWidget';
 import { EventCard } from './components/EventCard';
 import { EventDetailModal } from './components/EventDetailModal';
-import { HydroWeatherMonitor } from './components/weather/HydroWeatherMonitor';
 import { EmergencyDirectoryModal } from './components/emergency/EmergencyDirectoryModal';
 import { WasteAndServicesGuideModal } from './components/services/WasteAndServicesGuideModal';
 import { PurifiGuiaAssistantModal } from './components/assistant/PurifiGuiaAssistantModal';
@@ -706,11 +705,6 @@ export default function App() {
               onOpenServicesGuide={() => setShowServicesGuideModal(true)}
               totalEventsCount={events.length}
               totalNoticesCount={notices.length}
-            />
-
-            {/* River Magdalena & Weather Station Live Monitor */}
-            <HydroWeatherMonitor 
-              onOpenEmergencyDirectory={() => setShowEmergenciesModal(true)}
             />
 
             {/* Daily Citizen Quick Services Hub (Pharmacies, Waste collection, Road status, Town hall services) */}

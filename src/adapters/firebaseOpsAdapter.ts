@@ -42,7 +42,8 @@ export const COLLECTIONS = {
   USUARIOS: 'usuarios',
   ENCUESTAS: 'encuestas',
   LECTURA_AVISOS: 'lectura_avisos',
-  REPORTES_FALLAS: 'reportes_fallas'
+  REPORTES_FALLAS: 'reportes_fallas',
+  NOTIFICACIONES: 'notificaciones'
 };
 
 // Helper to remove undefined fields recursively to prevent Firestore errors
@@ -422,4 +423,37 @@ export const saveReporteFallaToFirestore = async (falla: ReporteFallaCiudadana) 
 export const deleteReporteFallaFromFirestore = async (id_falla: number) => {
   const ref = doc(db, COLLECTIONS.REPORTES_FALLAS, String(id_falla));
   await deleteDoc(ref);
+};
+
+// --- REAL-TIME NOTIFICACIONES CIUDADANAS ---
+export const subscribeToNotificaciones = (userId: number, callback: (notifs: any[]) => void): Unsubscribe => {
+  const q = collection(db, COLLECTIONS.NOTIFICACIONES);
+  return onSnapshot(q, (snapshot) => {
+    const list: any[] = [];
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      if (!data.id_usuario || Number(data.id_usuario) === Number(userId) || data.id_usuario === 0) {
+        list.push(data);
+      }
+    });
+    list.sort((a, b) => new Date(b.fecha || 0).getTime() - new Date(a.fecha || 0).getTime());
+    callback(list);
+  }, (err) => {
+    console.error('Firestore subscribeToNotificaciones error:', err);
+  });
+};
+
+export const saveNotificacionToFirestore = async (notif: any) => {
+  const notifId = notif.id_notificacion || Date.now();
+  const ref = doc(db, COLLECTIONS.NOTIFICACIONES, String(notifId));
+  await setDoc(ref, sanitizeForFirestore({
+    id_notificacion: notifId,
+    id_usuario: Number(notif.id_usuario) || 0,
+    titulo: String(notif.titulo || ''),
+    mensaje: String(notif.mensaje || ''),
+    fecha: notif.fecha || new Date().toISOString(),
+    leida: Boolean(notif.leida),
+    tipo_ref: notif.tipo_ref || 'sistema',
+    id_ref: notif.id_ref || null
+  }), { merge: true });
 };

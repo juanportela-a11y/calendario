@@ -21,7 +21,8 @@ import {
   deleteEventoFromFirestore,
   saveAvisoToFirestore,
   deleteAvisoFromFirestore,
-  saveUsuarioToFirestore
+  saveUsuarioToFirestore,
+  saveNotificacionToFirestore
 } from './firebaseOpsAdapter';
 import { triggerLocalPush } from '../utils/notificationUtils';
 
@@ -31,9 +32,20 @@ let localNotices: Aviso[] = [...INITIAL_NOTICES];
 export class ApiClientAdapter {
   private static async request<T>(endpoint: string, options?: RequestInit, fallbackData?: T): Promise<T> {
     try {
+      let activeUser: any = null;
+      try {
+        const stored = typeof window !== 'undefined' ? localStorage.getItem('purifi_active_user') : null;
+        if (stored) activeUser = JSON.parse(stored);
+      } catch {}
+
+      const authHeaders: Record<string, string> = {};
+      if (activeUser?.rol) authHeaders['x-user-role'] = activeUser.rol;
+      if (activeUser?.id_usuario) authHeaders['x-user-id'] = String(activeUser.id_usuario);
+
       const res = await fetch(endpoint, {
         headers: {
           'Content-Type': 'application/json',
+          ...authHeaders,
           ...options?.headers,
         },
         ...options,
@@ -278,6 +290,13 @@ export class ApiClientAdapter {
       tipo_ref: dto.tipo_ref,
       id_ref: dto.id_ref
     };
+
+    try {
+      await saveNotificacionToFirestore(fallbackNotif);
+    } catch (e) {
+      console.warn('Firestore saveNotificacion error:', e);
+    }
+
     return this.request<Notificacion>('/api/notifications', {
       method: 'POST',
       body: JSON.stringify(dto),
@@ -285,10 +304,33 @@ export class ApiClientAdapter {
   }
 
   static async broadcastNotification(dto: { titulo: string; mensaje: string; tipo_ref?: string; id_ref?: number }): Promise<{ success: boolean; count: number }> {
+    try {
+      // Save global notification to Firestore (id_usuario: 0 represents broadcast)
+      await saveNotificacionToFirestore({
+        id_notificacion: Date.now(),
+        id_usuario: 0,
+        titulo: dto.titulo,
+        mensaje: dto.mensaje,
+        fecha: new Date().toISOString(),
+        leida: false,
+        tipo_ref: dto.tipo_ref,
+        id_ref: dto.id_ref
+      });
+    } catch (e) {
+      console.warn('Firestore broadcastNotification error:', e);
+    }
+
     return this.request<{ success: boolean; count: number }>('/api/notifications/broadcast', {
       method: 'POST',
       body: JSON.stringify(dto),
     }, { success: true, count: 1 });
+  }
+
+  static async askPurifiGuiaAi(message: string, history?: { role: 'user' | 'model'; text: string }[]): Promise<{ reply: string | null; fallback?: boolean; error?: string }> {
+    return this.request<{ reply: string | null; fallback?: boolean; error?: string }>('/api/assistant/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message, history }),
+    }, { reply: null, fallback: true });
   }
 
   static async markNotificationRead(id: number): Promise<{ success: boolean }> {
