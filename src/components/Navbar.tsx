@@ -493,34 +493,39 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* User Profile, Unified Menu & Auth Container */}
           <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
-            {/* Unified Preferences & Utilities Menu */}
+            {/* PurifiPuntos Cívicos por fuera */}
+            <button
+              type="button"
+              onClick={() => setActiveTab('operaciones')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all cursor-pointer text-xs font-black shadow-2xs ${
+                activeTab === 'operaciones'
+                  ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                  : 'bg-amber-50/90 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 hover:border-amber-300'
+              }`}
+              title="PurifiPuntos Cívicos y Recompensas Ciudadanas"
+            >
+              <Trophy className={`w-3.5 h-3.5 ${activeTab === 'operaciones' ? 'text-white' : 'text-amber-500'}`} />
+              <span>{currentUser ? `${userPoints} PTS` : 'Puntos Cívicos'}</span>
+            </button>
+
+            {/* Menú de Herramientas Cívicas y Servicios Municipales */}
             <div className="relative" ref={utilsRef}>
               <button
                 type="button"
                 onClick={() => setUtilsMenuOpen(!utilsMenuOpen)}
-                className={`relative px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs ${
-                  utilsMenuOpen || activeTab === 'notificaciones'
-                    ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400 shadow-xs'
-                    : 'border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-slate-700'
+                className={`relative px-3 py-1.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs text-xs font-bold ${
+                  utilsMenuOpen
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                    : 'border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:border-blue-300 dark:hover:border-blue-700 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-slate-700'
                 }`}
                 title="Herramientas Cívicas, Notificaciones y Ajustes"
               >
-                {/* Notifications Icon with Unread Badge */}
-                <div className="relative flex items-center">
-                  <Bell className="w-3.5 h-3.5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[8px] font-black w-3.5 h-3.5 flex items-center justify-center rounded-full shadow-xs">
-                      {unreadCount}
-                    </span>
-                  )}
-                </div>
-
-                <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700 mx-0.5" />
-
-                {/* Dark Mode Icon */}
-                {darkMode ? <Moon className="w-3.5 h-3.5 text-indigo-400" /> : <Sun className="w-3.5 h-3.5 text-amber-500" />}
-
-                <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${utilsMenuOpen ? 'rotate-180' : ''}`} />
+                <Sparkles className={`w-3.5 h-3.5 ${utilsMenuOpen ? 'text-cyan-200' : 'text-blue-600 dark:text-blue-400'}`} />
+                <span>Herramientas</span>
+                {unreadCount > 0 && (
+                  <span className="w-2 h-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900 animate-pulse" />
+                )}
+                <ChevronDown className={`w-3 h-3 transition-transform ${utilsMenuOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {/* Utilities Dropdown Menu */}
@@ -624,25 +629,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                       {darkMode ? 'Noche' : 'Día'}
                     </span>
                   </button>
-
-                  {/* 5. PurifiPuntos Cívicos */}
-                  {currentUser && (
-                    <button
-                      onClick={() => {
-                        setActiveTab('operaciones');
-                        setUtilsMenuOpen(false);
-                      }}
-                      className="w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold bg-amber-50/70 dark:bg-amber-950/30 hover:bg-amber-100/70 text-amber-800 dark:text-amber-300 border border-amber-200/60 dark:border-amber-900/40 transition-all cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/60 flex items-center justify-center">
-                          <Trophy className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                        </div>
-                        <span>PurifiPuntos Cívicos</span>
-                      </div>
-                      <span className="text-xs font-black">{userPoints} PTS</span>
-                    </button>
-                  )}
                 </div>
               )}
             </div>
