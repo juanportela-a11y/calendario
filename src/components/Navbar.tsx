@@ -867,7 +867,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onOpenServicesGuide();
                 setMobileMenuOpen(false);
               }}
-              className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 flex items-center gap-2 border border-slate-200 dark:border-slate-700"
+              className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-800 dark:text-slate-200 flex items-center gap-2 border border-slate-200 dark:border-slate-700"
             >
               <Truck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               <span>Rutas de Aseo & Trámites</span>
