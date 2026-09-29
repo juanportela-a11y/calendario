@@ -313,7 +313,7 @@ export class ApiClientAdapter {
         mensaje: dto.mensaje,
         fecha: new Date().toISOString(),
         leida: false,
-        tipo_ref: dto.tipo_ref,
+        tipo_ref: (dto.tipo_ref as any) || 'sistema',
         id_ref: dto.id_ref
       });
     } catch (e) {

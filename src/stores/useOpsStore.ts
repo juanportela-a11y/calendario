@@ -43,7 +43,9 @@ import {
   subscribeToReportesFallas,
   saveReporteFallaToFirestore,
   deleteReporteFallaFromFirestore,
-  saveNotificacionToFirestore
+  saveNotificacionToFirestore,
+  saveUserPointsToFirestore,
+  getUserFromFirestore
 } from '../adapters/firebaseOpsAdapter';
 import { OfflineStorageManager, STORAGE_KEYS } from '../utils/offlineStorage';
 import { triggerLocalPush } from '../utils/notificationUtils';
@@ -77,7 +79,8 @@ interface OpsState {
   setSelectedDesvio: (desvio: RutaDesvio | null) => void;
   initFirestoreSync: () => () => void;
   addAuditLog: (log: Omit<RegistroAuditoria, 'id_log' | 'timestamp'> & { timestamp?: string; id_log?: number }) => Promise<void>;
-  addUserPoints: (pts: number, motivo: string) => void;
+  addUserPoints: (pts: number, motivo: string, userId?: number) => void;
+  syncUserPoints: (userId: number, localPoints?: number) => Promise<number>;
   markNoticeAsReadByCitizen: (avisoTitulo: string, userName: string, noticeId?: number) => Promise<void> | void;
   addReportComment: (idVia: number, autor: string, texto: string, rol?: string) => void;
   deleteReporteVia: (idVia: number, userMod?: string) => Promise<void>;
@@ -147,12 +150,94 @@ export const useOpsStore = create<OpsState>((set, get) => ({
     ]
   },
 
-  addUserPoints: (pts, motivo) => {
-    set((state) => {
-      const newPoints = state.userPoints + pts;
-      return { userPoints: newPoints };
-    });
+  addUserPoints: (pts, motivo, userId) => {
+    const current = get().userPoints;
+    const newPoints = current + pts;
+    set({ userPoints: newPoints });
     get().showToast(`🏆 +${pts} PTS cívicos ganados: ${motivo}`);
+
+    // Resolver ID de usuario objetivo
+    let targetUid = userId;
+    if (!targetUid) {
+      try {
+        const stored = localStorage.getItem('purifi_active_user');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.id_usuario) targetUid = Number(parsed.id_usuario);
+        }
+      } catch {
+        // Ignorar si no hay sesión
+      }
+    }
+
+    // Sincronizar inmediatamente con Firestore si existe usuario activo
+    if (targetUid) {
+      saveUserPointsToFirestore(targetUid, newPoints).catch((err) => {
+        console.warn('Advertencia al guardar puntos en Firestore:', err);
+      });
+      try {
+        const stored = localStorage.getItem('purifi_active_user');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          parsed.puntos_civicos = newPoints;
+          localStorage.setItem('purifi_active_user', JSON.stringify(parsed));
+          window.dispatchEvent(new CustomEvent('purifi_user_points_synced', { 
+            detail: { points: newPoints, userId: targetUid } 
+          }));
+        }
+      } catch {
+        // Ignorar error de storage
+      }
+    }
+  },
+
+  syncUserPoints: async (userId: number, localPoints?: number): Promise<number> => {
+    try {
+      const firestoreUser = await getUserFromFirestore(userId);
+      let canonicalPoints = get().userPoints;
+
+      if (firestoreUser && typeof firestoreUser.puntos_civicos === 'number') {
+        const dbPoints = firestoreUser.puntos_civicos;
+        // Priorizar el valor más alto o más actualizado para evitar pérdida de puntos ganados localmente
+        if (localPoints !== undefined && localPoints > dbPoints) {
+          canonicalPoints = localPoints;
+          await saveUserPointsToFirestore(userId, canonicalPoints);
+        } else if (get().userPoints > dbPoints) {
+          canonicalPoints = get().userPoints;
+          await saveUserPointsToFirestore(userId, canonicalPoints);
+        } else {
+          canonicalPoints = dbPoints;
+        }
+      } else {
+        // Documento en Firestore no tenía puntos registrados aún
+        canonicalPoints = localPoints ?? get().userPoints ?? 150;
+        await saveUserPointsToFirestore(userId, canonicalPoints);
+      }
+
+      set({ userPoints: canonicalPoints });
+
+      // Sincronizar con el perfil local en localStorage
+      try {
+        const stored = localStorage.getItem('purifi_active_user');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && Number(parsed.id_usuario) === Number(userId)) {
+            parsed.puntos_civicos = canonicalPoints;
+            localStorage.setItem('purifi_active_user', JSON.stringify(parsed));
+            window.dispatchEvent(new CustomEvent('purifi_user_points_synced', { 
+              detail: { points: canonicalPoints, userId } 
+            }));
+          }
+        }
+      } catch (e) {
+        console.warn('Error actualizando perfil local de puntos:', e);
+      }
+
+      return canonicalPoints;
+    } catch (err) {
+      console.warn('Error en syncUserPoints con base de datos Firestore:', err);
+      return get().userPoints;
+    }
   },
 
   markNoticeAsReadByCitizen: async (avisoTitulo, userName, noticeId) => {
@@ -971,16 +1056,23 @@ export const useOpsStore = create<OpsState>((set, get) => ({
       }));
       await saveAuditLogToFirestore(log);
 
-      // Persist notification to citizen
+      // Persist notification to citizen with full metadata
       const notifSol = {
         id_notificacion: Date.now(),
         id_usuario: target.id_usuario || 0,
+        nombre_ciudadano: target.nombre_ciudadano,
+        correo_ciudadano: target.correo_ciudadano,
         titulo: `✅ ¡Tu reporte #${idFalla} ha sido SOLUCIONADO!`,
-        mensaje: `La falla reportada en ${target.barrio} (${target.tipo.toUpperCase()}) fue reparada satisfactoriamente por la administración municipal. ${respuestaOficial || ''}`,
+        mensaje: `La falla reportada en ${target.barrio} (${target.tipo.toUpperCase()}) fue reparada satisfactoriamente por la administración municipal. ${respuestaOficial ? 'Respuesta: ' + respuestaOficial : ''}`,
         fecha: new Date().toISOString(),
         leida: false,
-        tipo_ref: 'reporte_falla',
-        id_ref: idFalla
+        tipo_ref: 'reporte_falla' as const,
+        id_ref: idFalla,
+        estado_falla: 'solucionado',
+        cuadrilla: cuadrillaAsignada || target.cuadrilla_asignada,
+        respuesta_oficial: respuestaOficial,
+        barrio: target.barrio,
+        tipo_falla: target.tipo
       };
       await saveNotificacionToFirestore(notifSol);
       triggerLocalPush(`✅ Reporte #${idFalla} Solucionado`, notifSol.mensaje, `falla-${idFalla}`);
@@ -1033,12 +1125,19 @@ export const useOpsStore = create<OpsState>((set, get) => ({
     const notifObj = {
       id_notificacion: Date.now(),
       id_usuario: target.id_usuario || 0,
+      nombre_ciudadano: target.nombre_ciudadano,
+      correo_ciudadano: target.correo_ciudadano,
       titulo: `🔔 Actualización Reporte #${idFalla}: ${friendlyStatus}`,
       mensaje: `Tu reporte de falla [${target.tipo.toUpperCase()}] en ${target.barrio} ahora está en: [${friendlyStatus}]. ${cuadrillaAsignada ? `Cuadrilla asignada: ${cuadrillaAsignada}. ` : ''}${respuestaOficial ? `Respuesta oficial: ${respuestaOficial}` : ''}`,
       fecha: new Date().toISOString(),
       leida: false,
-      tipo_ref: 'reporte_falla',
-      id_ref: idFalla
+      tipo_ref: 'reporte_falla' as const,
+      id_ref: idFalla,
+      estado_falla: nuevoEstado,
+      cuadrilla: cuadrillaAsignada || target.cuadrilla_asignada,
+      respuesta_oficial: respuestaOficial,
+      barrio: target.barrio,
+      tipo_falla: target.tipo
     };
     await saveNotificacionToFirestore(notifObj);
     triggerLocalPush(notifObj.titulo, notifObj.mensaje, `falla-${idFalla}`);

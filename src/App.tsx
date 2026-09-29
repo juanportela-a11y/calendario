@@ -32,7 +32,10 @@ import {
   subscribeToEventos, 
   subscribeToAvisos, 
   subscribeToUsuarios,
-  saveUsuarioToFirestore
+  saveUsuarioToFirestore,
+  subscribeToNotificaciones,
+  markNotificacionAsReadInFirestore,
+  markAllNotificacionesAsReadInFirestore
 } from './adapters/firebaseOpsAdapter';
 import { OfflineStorageManager, STORAGE_KEYS } from './utils/offlineStorage';
 import { OfflineStatusIndicator } from './components/common/OfflineStatusIndicator';
@@ -211,7 +214,9 @@ export default function App() {
     auditLogs,
     initFirestoreSync,
     addAuditLog,
-    showToast
+    showToast,
+    syncUserPoints,
+    userPoints
   } = useOpsStore();
 
   const urgentNotice = notices.find(n => n.urgente) || null;
@@ -259,6 +264,53 @@ export default function App() {
       if (unsubNotices) unsubNotices();
       if (unsubUsers) unsubUsers();
     };
+  }, []);
+
+  // Real-time Firestore notification listener for active citizen & PurifiPuntos synchronization
+  useEffect(() => {
+    if (!currentUser || !currentUser.id_usuario) {
+      setNotifications([]);
+      return;
+    }
+
+    // 1. Sincronizar PurifiPuntos entre el frontend y la base de datos central en Firestore
+    syncUserPoints(currentUser.id_usuario, currentUser.puntos_civicos).then((canonicalPoints) => {
+      setCurrentUser(prev => prev ? { ...prev, puntos_civicos: canonicalPoints } : null);
+    });
+
+    // 2. Suscribirse a cambios en vivo de notificaciones (incluye actualizaciones de reportes de fallas)
+    const unsubNotifs = subscribeToNotificaciones(
+      {
+        id_usuario: currentUser.id_usuario,
+        correo: currentUser.correo,
+        nombre_usuario: currentUser.nombre_usuario
+      },
+      (liveNotifs) => {
+        setNotifications(liveNotifs);
+      }
+    );
+
+    return () => {
+      if (unsubNotifs) unsubNotifs();
+    };
+  }, [currentUser?.id_usuario, currentUser?.correo, currentUser?.nombre_usuario, syncUserPoints]);
+
+  // Listener para sincronización de puntos desde eventos de la app
+  useEffect(() => {
+    const handlePointsEvent = (e: any) => {
+      const { points, userId } = e.detail || {};
+      if (points !== undefined) {
+        setCurrentUser(prev => {
+          if (!prev) return null;
+          if (!userId || Number(prev.id_usuario) === Number(userId)) {
+            return { ...prev, puntos_civicos: points };
+          }
+          return prev;
+        });
+      }
+    };
+    window.addEventListener('purifi_user_points_synced', handlePointsEvent);
+    return () => window.removeEventListener('purifi_user_points_synced', handlePointsEvent);
   }, []);
 
   // Load initial data from backend API & Sync Offline
@@ -488,17 +540,26 @@ export default function App() {
   };
 
   const handleMarkNotifRead = async (id: number) => {
-    if (!currentUser) return;
-    await ApiClientAdapter.markNotificationRead(id);
-    const updatedNotifs = await ApiClientAdapter.getNotifications(currentUser.id_usuario);
-    setNotifications(updatedNotifs);
+    setNotifications(prev => prev.map(n => n.id_notificacion === id ? { ...n, leida: true } : n));
+    try {
+      await markNotificacionAsReadInFirestore(id);
+      if (currentUser) {
+        await ApiClientAdapter.markNotificationRead(id).catch(() => {});
+      }
+    } catch (err) {
+      console.warn('Error al marcar notificación como leída:', err);
+    }
   };
 
   const handleMarkAllNotifsRead = async () => {
+    setNotifications(prev => prev.map(n => ({ ...n, leida: true })));
     if (!currentUser) return;
-    await ApiClientAdapter.markAllNotificationsRead(currentUser.id_usuario);
-    const updatedNotifs = await ApiClientAdapter.getNotifications(currentUser.id_usuario);
-    setNotifications(updatedNotifs);
+    try {
+      await markAllNotificacionesAsReadInFirestore(currentUser.id_usuario);
+      await ApiClientAdapter.markAllNotificationsRead(currentUser.id_usuario).catch(() => {});
+    } catch (err) {
+      console.warn('Error al marcar todas como leídas:', err);
+    }
   };
 
   const handleSendBroadcastNotification = async (titulo: string, mensaje: string, tipo: string) => {

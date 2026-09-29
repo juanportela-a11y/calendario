@@ -2,6 +2,7 @@ import {
   collection, 
   doc, 
   setDoc, 
+  getDoc,
   getDocs, 
   deleteDoc,
   onSnapshot, 
@@ -20,7 +21,8 @@ import {
   Aviso,
   Usuario,
   EncuestaCiudadana,
-  ReporteFallaCiudadana
+  ReporteFallaCiudadana,
+  Notificacion
 } from '../types';
 import { 
   INITIAL_VIAS, 
@@ -348,6 +350,29 @@ export const deleteUsuarioFromFirestore = async (id_usuario: number) => {
   await deleteDoc(ref);
 };
 
+export const saveUserPointsToFirestore = async (userId: number, points: number) => {
+  try {
+    const ref = doc(db, COLLECTIONS.USUARIOS, String(userId));
+    await setDoc(ref, { puntos_civicos: points }, { merge: true });
+  } catch (error) {
+    console.error('Error saving user points to Firestore:', error);
+    throw error;
+  }
+};
+
+export const getUserFromFirestore = async (userId: number): Promise<Usuario | null> => {
+  try {
+    const ref = doc(db, COLLECTIONS.USUARIOS, String(userId));
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      return snap.data() as Usuario;
+    }
+  } catch (error) {
+    console.warn('Error fetching user from Firestore:', error);
+  }
+  return null;
+};
+
 // --- REAL-TIME ENCUESTAS CIUDADANAS ---
 export const subscribeToEncuestas = (callback: (encuestas: EncuestaCiudadana[]) => void): Unsubscribe => {
   const q = collection(db, COLLECTIONS.ENCUESTAS);
@@ -425,17 +450,59 @@ export const deleteReporteFallaFromFirestore = async (id_falla: number) => {
   await deleteDoc(ref);
 };
 
-// --- REAL-TIME NOTIFICACIONES CIUDADANAS ---
-export const subscribeToNotificaciones = (userId: number, callback: (notifs: any[]) => void): Unsubscribe => {
+// --- REAL-TIME NOTIFICACIONES CIUDADANAS & REPORTES DE FALLAS ---
+export interface UserNotificationIdentity {
+  id_usuario: number;
+  correo?: string;
+  nombre_usuario?: string;
+}
+
+export const subscribeToNotificaciones = (
+  userOrId: number | UserNotificationIdentity,
+  callback: (notifs: Notificacion[]) => void
+): Unsubscribe => {
   const q = collection(db, COLLECTIONS.NOTIFICACIONES);
+  const targetId = typeof userOrId === 'number' ? userOrId : userOrId.id_usuario;
+  const targetEmail = typeof userOrId === 'object' && userOrId.correo ? userOrId.correo.trim().toLowerCase() : undefined;
+  const targetName = typeof userOrId === 'object' && userOrId.nombre_usuario ? userOrId.nombre_usuario.trim().toLowerCase() : undefined;
+
   return onSnapshot(q, (snapshot) => {
-    const list: any[] = [];
+    const list: Notificacion[] = [];
     snapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      if (!data.id_usuario || Number(data.id_usuario) === Number(userId) || data.id_usuario === 0) {
-        list.push(data);
+      const data = docSnap.data() as any;
+      if (!data) return;
+
+      const notifUserId = Number(data.id_usuario) || 0;
+      const notifEmail = data.correo_ciudadano ? String(data.correo_ciudadano).trim().toLowerCase() : undefined;
+      const notifName = data.nombre_ciudadano ? String(data.nombre_ciudadano).trim().toLowerCase() : undefined;
+
+      // Broadcast notifications (id_usuario === 0) or user-specific match
+      const isBroadcast = notifUserId === 0;
+      const isDirectUser = targetId > 0 && notifUserId === targetId;
+      const isEmailMatch = targetEmail && notifEmail && targetEmail === notifEmail;
+      const isNameMatch = targetName && notifName && targetName === notifName;
+
+      if (isBroadcast || isDirectUser || isEmailMatch || isNameMatch) {
+        list.push({
+          id_notificacion: Number(data.id_notificacion) || Number(docSnap.id) || Date.now(),
+          id_usuario: notifUserId,
+          titulo: String(data.titulo || 'Notificación Municipal'),
+          mensaje: String(data.mensaje || ''),
+          fecha: String(data.fecha || new Date().toISOString()),
+          leida: Boolean(data.leida),
+          tipo_ref: data.tipo_ref || 'sistema',
+          id_ref: data.id_ref ? Number(data.id_ref) : undefined,
+          estado_falla: data.estado_falla ? String(data.estado_falla) : undefined,
+          cuadrilla: data.cuadrilla ? String(data.cuadrilla) : undefined,
+          respuesta_oficial: data.respuesta_oficial ? String(data.respuesta_oficial) : undefined,
+          nombre_ciudadano: data.nombre_ciudadano ? String(data.nombre_ciudadano) : undefined,
+          correo_ciudadano: data.correo_ciudadano ? String(data.correo_ciudadano) : undefined,
+          barrio: data.barrio ? String(data.barrio) : undefined,
+          tipo_falla: data.tipo_falla ? String(data.tipo_falla) : undefined
+        });
       }
     });
+
     list.sort((a, b) => new Date(b.fecha || 0).getTime() - new Date(a.fecha || 0).getTime());
     callback(list);
   }, (err) => {
@@ -443,7 +510,7 @@ export const subscribeToNotificaciones = (userId: number, callback: (notifs: any
   });
 };
 
-export const saveNotificacionToFirestore = async (notif: any) => {
+export const saveNotificacionToFirestore = async (notif: Partial<Notificacion> & Record<string, any>) => {
   const notifId = notif.id_notificacion || Date.now();
   const ref = doc(db, COLLECTIONS.NOTIFICACIONES, String(notifId));
   await setDoc(ref, sanitizeForFirestore({
@@ -454,6 +521,43 @@ export const saveNotificacionToFirestore = async (notif: any) => {
     fecha: notif.fecha || new Date().toISOString(),
     leida: Boolean(notif.leida),
     tipo_ref: notif.tipo_ref || 'sistema',
-    id_ref: notif.id_ref || null
+    id_ref: notif.id_ref || null,
+    estado_falla: notif.estado_falla || null,
+    cuadrilla: notif.cuadrilla || null,
+    respuesta_oficial: notif.respuesta_oficial || null,
+    nombre_ciudadano: notif.nombre_ciudadano || null,
+    correo_ciudadano: notif.correo_ciudadano || null,
+    barrio: notif.barrio || null,
+    tipo_falla: notif.tipo_falla || null
   }), { merge: true });
+};
+
+export const markNotificacionAsReadInFirestore = async (notifId: number) => {
+  try {
+    const ref = doc(db, COLLECTIONS.NOTIFICACIONES, String(notifId));
+    await setDoc(ref, { leida: true }, { merge: true });
+  } catch (error) {
+    console.warn('Error marking notification as read in Firestore:', error);
+  }
+};
+
+export const markAllNotificacionesAsReadInFirestore = async (userId: number) => {
+  try {
+    const q = collection(db, COLLECTIONS.NOTIFICACIONES);
+    const snap = await getDocs(q);
+    const batch = writeBatch(db);
+    let count = 0;
+    snap.forEach((docSnap) => {
+      const data = docSnap.data();
+      if ((!data.id_usuario || Number(data.id_usuario) === Number(userId) || data.id_usuario === 0) && !data.leida) {
+        batch.update(docSnap.ref, { leida: true });
+        count++;
+      }
+    });
+    if (count > 0) {
+      await batch.commit();
+    }
+  } catch (error) {
+    console.warn('Error marking all notifications as read in Firestore:', error);
+  }
 };

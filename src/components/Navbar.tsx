@@ -182,7 +182,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'reportar', label: 'Reportar Falla', icon: Megaphone },
     { id: 'operaciones', label: 'Operaciones', icon: Activity },
     { id: 'calendario', label: 'Calendario', icon: Calendar },
-    { id: 'turismo', label: 'Turismo', icon: Store },
     { id: 'avisos', label: 'Avisos', icon: ShieldAlert },
   ];
 
@@ -191,7 +190,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'reportar', label: 'Reportar Falla', icon: Megaphone },
     { id: 'operaciones', label: 'Operaciones', icon: Activity },
     { id: 'calendario', label: 'Calendario', icon: Calendar },
-    { id: 'turismo', label: 'Turismo', icon: Store },
     { id: 'avisos', label: 'Avisos', icon: ShieldAlert },
     { id: 'notificaciones', label: 'Notificaciones', icon: Bell, badge: unreadCount },
     { id: 'perfil', label: 'Mi Perfil', icon: User },
@@ -363,28 +361,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                           <div className="text-left">
                             <span className="block font-black">Avisos Oficiales</span>
                             <span className="text-[10px] text-slate-400 font-normal">Comunicados y alertas alcaldía</span>
-                          </div>
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setActiveTab('turismo');
-                          setNavMenuOpen(false);
-                        }}
-                        className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                          activeTab === 'turismo'
-                            ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400'
-                            : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                            <Store className="w-4 h-4" />
-                          </div>
-                          <div className="text-left">
-                            <span className="block font-black">Turismo & Directorio</span>
-                            <span className="text-[10px] text-slate-400 font-normal">Comercios, gastronomía y sitios</span>
                           </div>
                         </div>
                       </button>

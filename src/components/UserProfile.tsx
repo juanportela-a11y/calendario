@@ -52,7 +52,20 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   );
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  const { userPoints, vias, notifiedUsers, encuestas } = useOpsStore();
+  const { userPoints, vias, notifiedUsers, encuestas, fallas, syncUserPoints } = useOpsStore();
+
+  // Sincronizar PurifiPuntos con la base de datos central en Firestore
+  React.useEffect(() => {
+    if (currentUser?.id_usuario) {
+      syncUserPoints(currentUser.id_usuario, currentUser.puntos_civicos);
+    }
+  }, [currentUser?.id_usuario, currentUser?.puntos_civicos, syncUserPoints]);
+
+  const myFallas = currentUser ? fallas.filter(f => 
+    f.nombre_ciudadano === currentUser.nombre_usuario ||
+    (f.correo_ciudadano && f.correo_ciudadano.toLowerCase() === currentUser.correo.toLowerCase()) ||
+    currentUser.rol === 'administrador'
+  ) : [];
 
   if (!currentUser) {
     return (
@@ -188,7 +201,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({
           <div className="bg-white/15 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/30 flex items-center justify-between sm:justify-start gap-2 shadow-xs">
             <Trophy className="w-5 h-5 text-amber-300 animate-bounce" />
             <div>
-              <p className="text-[10px] text-blue-200 font-bold uppercase">PurifiPuntos Cívicos</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-[10px] text-blue-200 font-bold uppercase">PurifiPuntos Cívicos</p>
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400" title="Sincronizado con base central de Firestore" />
+              </div>
               <p className="text-sm font-black text-white">{userPoints} PTS</p>
             </div>
           </div>
@@ -403,7 +419,90 @@ export const UserProfile: React.FC<UserProfileProps> = ({
           <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
             <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
               <Award className="w-4 h-4 text-blue-600" />
-              <span>Tus Aportes a la Comunidad de Purificación</span>
+              <span>Mis Reportes de Servicios Públicos & Fallas Radicadas ({myFallas.length})</span>
+            </h4>
+
+            {myFallas.length === 0 ? (
+              <p className="text-xs text-slate-400 py-4 text-center">
+                No tienes reportes de fallas radicados en el sistema. Puedes radicar uno desde el menú flotante o Centro Rápido Ciudadano para ganar +30 PurifiPuntos.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {myFallas.map(f => {
+                  const isSolucionado = f.estado === 'solucionado' || f.estado === 'resuelto';
+                  const isEnProceso = f.estado === 'cuadrilla_asignada' || f.estado === 'en_reparacion' || f.estado === 'en_revision';
+                  const isNotificado = f.estado === 'notificado';
+
+                  return (
+                    <div key={f.id_falla} className="p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2.5">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                            f.tipo === 'agua' 
+                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300' 
+                              : f.tipo === 'luz' 
+                              ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300' 
+                              : f.tipo === 'aseo'
+                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300'
+                              : 'bg-orange-100 text-orange-800 dark:bg-orange-900/60 dark:text-orange-300'
+                          }`}>
+                            Servicio {f.tipo.toUpperCase()}
+                          </span>
+                          <span className="text-xs font-bold text-slate-800 dark:text-white">
+                            Radicado #{f.id_falla}
+                          </span>
+                        </div>
+
+                        <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase flex items-center gap-1 self-start sm:self-auto ${
+                          isSolucionado
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300'
+                            : isEnProceso
+                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-300'
+                            : isNotificado
+                            ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300 border border-cyan-300'
+                            : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300'
+                        }`}>
+                          <Clock className="w-3 h-3" />
+                          <span>
+                            {isSolucionado 
+                              ? 'Solucionado / Resuelto' 
+                              : isEnProceso 
+                              ? (f.cuadrilla_asignada ? `En Proceso - ${f.cuadrilla_asignada.split(' - ')[0]}` : 'En Proceso') 
+                              : isNotificado 
+                              ? 'Notificado a Cuadrilla' 
+                              : 'Recibido / En Espera'}
+                          </span>
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
+                        {f.descripcion}
+                      </p>
+
+                      <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-500 dark:text-slate-400">
+                        <span>📍 {f.barrio} ({f.ubicacion})</span>
+                        <span>📅 Radicado: {f.fecha_reporte}</span>
+                        <span className="text-amber-600 dark:text-amber-400 font-bold">⭐ +{f.puntos_ganados || 30} Puntos Cívicos</span>
+                      </div>
+
+                      {f.respuesta_oficial && (
+                        <div className="p-2.5 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 text-xs">
+                          <p className="font-bold text-blue-900 dark:text-blue-200">Respuesta Oficial del Municipio:</p>
+                          <p className="text-slate-700 dark:text-slate-300 mt-0.5">{f.respuesta_oficial}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Actividades Viales */}
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+            <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+              <HardHat className="w-4 h-4 text-amber-500" />
+              <span>Reportes de Malla Vial & Huecos</span>
             </h4>
 
             {myViasReportadas.length === 0 ? (

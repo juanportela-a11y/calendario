@@ -90,8 +90,15 @@ export interface Notificacion {
   mensaje: string;
   fecha: string;
   leida: boolean;
-  tipo_ref?: 'evento' | 'aviso' | 'sistema' | 'via' | 'salud' | 'reporte_ciudadano';
+  tipo_ref?: 'evento' | 'aviso' | 'sistema' | 'via' | 'salud' | 'reporte_ciudadano' | 'reporte_falla';
   id_ref?: number;
+  estado_falla?: string;
+  cuadrilla?: string;
+  respuesta_oficial?: string;
+  nombre_ciudadano?: string;
+  correo_ciudadano?: string;
+  barrio?: string;
+  tipo_falla?: string;
 }
 
 export interface UsuarioEvento {

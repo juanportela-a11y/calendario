@@ -21,7 +21,14 @@ import {
   RefreshCw,
   Send
 } from 'lucide-react';
-import { GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
+import { 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile
+} from 'firebase/auth';
 import { auth } from '../firebase';
 import { CategoryCode, UserRole, Usuario } from '../types';
 import { ApiClientAdapter } from '../adapters/apiClient';
@@ -242,6 +249,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     setLoading(true);
     try {
+      // Connect real Firebase Auth if identifier is an email
+      if (loginIdentifier.includes('@') && loginPassword) {
+        try {
+          await signInWithEmailAndPassword(auth, loginIdentifier.trim(), loginPassword);
+        } catch (fbAuthErr: any) {
+          console.warn('Firebase signIn notice:', fbAuthErr?.code);
+        }
+      }
+
       const res = await onLoginUser(loginIdentifier.trim(), loginPassword);
       if (res.success) {
         setSuccessMessage('¡Inicio de sesión exitoso! Bienvenido a PurifiCalendario.');
@@ -301,6 +317,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     setLoading(true);
     try {
+      // 1. Create real account in Firebase Auth
+      try {
+        const userCred = await createUserWithEmailAndPassword(auth, cleanCorreo, regPassword);
+        if (userCred.user) {
+          await updateProfile(userCred.user, { displayName: cleanNombre });
+        }
+      } catch (fbErr: any) {
+        if (fbErr?.code === 'auth/email-already-in-use') {
+          try {
+            await signInWithEmailAndPassword(auth, cleanCorreo, regPassword);
+          } catch {
+            // ignore
+          }
+        } else {
+          console.warn('Firebase createUser notice:', fbErr?.code || fbErr);
+        }
+      }
+
+      // 2. Persist user and create session
       const res = await onRegisterUser({
         nombre_usuario: cleanNombre,
         correo: cleanCorreo,

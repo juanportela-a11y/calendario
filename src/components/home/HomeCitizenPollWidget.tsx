@@ -4,9 +4,14 @@ import {
   CheckCircle2, 
   Users, 
   ShieldCheck,
-  Award
+  Award,
+  ChevronRight,
+  Filter,
+  Check,
+  Calendar,
+  Layers
 } from 'lucide-react';
-import { Usuario } from '../../types';
+import { Usuario, EncuestaCiudadana } from '../../types';
 import { useOpsStore } from '../../stores/useOpsStore';
 
 interface HomeCitizenPollWidgetProps {
@@ -18,8 +23,18 @@ export const HomeCitizenPollWidget: React.FC<HomeCitizenPollWidgetProps> = ({
   currentUser,
   onVoteSuccess
 }) => {
-  const { encuestas, voteEncuesta, addUserPoints } = useOpsStore();
-  const activeEncuesta = encuestas.find(e => e.estado === 'activa') || encuestas[0];
+  const { encuestas, voteEncuesta, addUserPoints, showToast } = useOpsStore();
+  const [selectedCategoria, setSelectedCategoria] = useState<string>('todas');
+  const [activeEncuestaId, setActiveEncuestaId] = useState<number | null>(null);
+
+  const filteredEncuestas = encuestas.filter(e => {
+    if (selectedCategoria === 'todas') return true;
+    return e.categoria === selectedCategoria;
+  });
+
+  const activeEncuesta = (activeEncuestaId !== null 
+    ? encuestas.find(e => e.id_encuesta === activeEncuestaId)
+    : null) || filteredEncuestas[0] || encuestas[0];
 
   const userId = currentUser ? `user_${currentUser.id_usuario}` : 'invitado_local';
   
@@ -42,6 +57,7 @@ export const HomeCitizenPollWidget: React.FC<HomeCitizenPollWidgetProps> = ({
 
     await voteEncuesta(activeEncuesta.id_encuesta, idOpcion, userId);
     addUserPoints(25, 'Voto en Consulta Ciudadana Municipal');
+    showToast('¡Voto registrado en Firestore! Has ganado +25 PurifiPuntos');
 
     if (onVoteSuccess) {
       onVoteSuccess(25);
@@ -58,33 +74,66 @@ export const HomeCitizenPollWidget: React.FC<HomeCitizenPollWidgetProps> = ({
       
       <div className="relative z-10 space-y-6">
         
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-400 text-slate-950 flex items-center gap-1 shadow-xs">
-                <Vote className="w-3 h-3" />
-                <span>Presupuesto Participativo</span>
-              </span>
-              <span className="text-xs text-blue-200 font-semibold">
-                Alcaldía de Purificación &bull; {activeEncuesta.categoria.toUpperCase()}
-              </span>
+        {/* Module Header & Category Filters */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-400 text-slate-950 flex items-center gap-1 shadow-xs">
+                  <Vote className="w-3 h-3" />
+                  <span>Consultas Ciudadanas & Votación</span>
+                </span>
+                <span className="text-xs text-blue-200 font-semibold flex items-center gap-1">
+                  <Layers className="w-3 h-3" />
+                  <span>{encuestas.length} Consultas Disponibles</span>
+                </span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                {activeEncuesta.titulo}
+              </h3>
+              <p className="text-xs text-blue-100 mt-1 max-w-2xl leading-relaxed">
+                {activeEncuesta.descripcion || 'Tu voto ciudadano ayuda a la Administración Municipal a priorizar proyectos de inversión comunitaria.'} Recibe <strong className="text-amber-300">+25 PurifiPuntos</strong> con cada voto.
+              </p>
             </div>
-            <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-              {activeEncuesta.titulo}
-            </h3>
-            <p className="text-xs text-blue-100 mt-1 max-w-2xl">
-              {activeEncuesta.descripcion || 'Tu voto ciudadano ayuda a la Administración Municipal a priorizar proyectos de inversión comunitaria.'} Ganas <strong className="text-amber-300">+25 PurifiPuntos</strong> al participar.
-            </p>
+
+            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/15 self-start sm:self-auto shrink-0 shadow-xs">
+              <Users className="w-4 h-4 text-cyan-300 shrink-0" />
+              <div className="text-right">
+                <p className="text-sm font-black text-white leading-none">{(totalVotes || 0).toLocaleString()}</p>
+                <p className="text-[10px] text-blue-200 uppercase font-bold mt-0.5">Votos en Tiempo Real</p>
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/15 self-start sm:self-auto">
-            <Users className="w-4 h-4 text-cyan-300 shrink-0" />
-            <div className="text-right">
-              <p className="text-sm font-black text-white leading-none">{(totalVotes || 0).toLocaleString()}</p>
-              <p className="text-[10px] text-blue-200 uppercase font-bold">Votos Registrados</p>
+          {/* Consultation Switcher Tabs */}
+          {encuestas.length > 1 && (
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 scrollbar-none">
+              {encuestas.map((enc, idx) => {
+                const isSelected = activeEncuesta.id_encuesta === enc.id_encuesta;
+                const encVoted = Boolean(
+                  (enc.votos_usuarios && enc.votos_usuarios[userId]) ||
+                  localStorage.getItem(`purifica_poll_voted_${enc.id_encuesta}`) === 'true'
+                );
+
+                return (
+                  <button
+                    key={enc.id_encuesta}
+                    onClick={() => setActiveEncuestaId(enc.id_encuesta)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                      isSelected
+                        ? 'bg-amber-400 text-slate-950 shadow-md font-black ring-2 ring-amber-300'
+                        : 'bg-white/10 hover:bg-white/20 text-blue-100 border border-white/10'
+                    }`}
+                  >
+                    <span>Consulta #{idx + 1}: {enc.categoria.toUpperCase()}</span>
+                    {encVoted && (
+                      <Check className={`w-3.5 h-3.5 ${isSelected ? 'text-slate-950' : 'text-emerald-300'}`} />
+                    )}
+                  </button>
+                );
+              })}
             </div>
-          </div>
+          )}
         </div>
 
         {/* Voting Options Grid */}
@@ -120,7 +169,7 @@ export const HomeCitizenPollWidget: React.FC<HomeCitizenPollWidgetProps> = ({
                         Opción #{opt.id_opcion}
                       </span>
                       {hasVoted && (
-                        <span className="text-xs font-black text-white bg-blue-950/80 px-2 py-0.5 rounded-full border border-cyan-400/30">
+                        <span className="text-xs font-black text-white bg-blue-950/80 px-2.5 py-0.5 rounded-full border border-cyan-400/30">
                           {percentage}% ({opt.votos} votos)
                         </span>
                       )}
@@ -137,7 +186,7 @@ export const HomeCitizenPollWidget: React.FC<HomeCitizenPollWidgetProps> = ({
                             e.stopPropagation();
                             handleVote(opt.id_opcion);
                           }}
-                          className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition-transform active:scale-95 flex items-center gap-1.5 shadow-sm cursor-pointer"
+                          className="px-3.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition-transform active:scale-95 flex items-center gap-1.5 shadow-sm cursor-pointer"
                         >
                           <Vote className="w-3.5 h-3.5" />
                           <span>Votar por esta opción</span>
@@ -150,7 +199,7 @@ export const HomeCitizenPollWidget: React.FC<HomeCitizenPollWidgetProps> = ({
                     )}
 
                     {isSelected && (
-                      <div className="mt-2 flex items-center gap-1.5 text-xs font-black text-amber-300">
+                      <div className="mt-2.5 flex items-center gap-1.5 text-xs font-black text-amber-300">
                         <CheckCircle2 className="w-4 h-4 text-amber-400" />
                         <span>¡Tu voto ciudadano fue registrado con éxito!</span>
                       </div>
@@ -166,18 +215,26 @@ export const HomeCitizenPollWidget: React.FC<HomeCitizenPollWidgetProps> = ({
         <div className="pt-2 border-t border-white/15 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-blue-200">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>Consulta Ciudadana Oficial &bull; Respaldada por el Sistema de Información Municipal</span>
+            <span>Consulta Ciudadana Oficial &bull; Sincronización en Tiempo Real con Firestore</span>
           </div>
 
-          {hasVoted && (
-            <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-400/30">
-              ✓ Has participado en la encuesta activa
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {activeEncuesta.fecha_cierre && (
+              <span className="flex items-center gap-1 text-[11px] text-blue-200 opacity-90">
+                <Calendar className="w-3.5 h-3.5" />
+                <span>Cierre: {activeEncuesta.fecha_cierre}</span>
+              </span>
+            )}
+
+            {hasVoted && (
+              <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-400/30">
+                ✓ Has participado en esta consulta
+              </span>
+            )}
+          </div>
         </div>
 
       </div>
     </div>
   );
 };
-
