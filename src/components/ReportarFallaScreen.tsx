@@ -379,7 +379,7 @@ export const ReportarFallaScreen: React.FC<ReportarFallaScreenProps> = ({
 
       {/* TAB 1: FORMULARIO PRINCIPAL DE REPORTE (Estilo fiel a la imagen solicitada) */}
       {activeScreenTab === 'formulario' && (
-        <div className="bg-white dark:bg-slate-900 rounded-[36px] shadow-sm border border-slate-200/80 dark:border-slate-800 p-6 sm:p-10 md:p-12 transition-all animate-fade-in">
+        <div className="bg-white dark:bg-[#111d3d] rounded-[36px] shadow-sm border border-slate-200/90 dark:border-slate-700/80 p-6 sm:p-10 md:p-12 transition-all animate-fade-in">
           
           {/* TÍTULO PRINCIPAL: REPORTAR FALLA */}
           <div className="text-center space-y-1 mb-8">

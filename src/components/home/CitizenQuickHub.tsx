@@ -175,36 +175,37 @@ export const CitizenQuickHub: React.FC<CitizenQuickHubProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 sm:p-8 space-y-6 animate-fade-in">
+    <div className="bg-white dark:bg-[#111d3d] rounded-3xl border border-slate-200/90 dark:border-slate-700/80 shadow-sm hover:shadow-md transition-shadow p-6 sm:p-8 space-y-6">
       
       {/* Title & Section Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse" />
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-100 dark:border-slate-800/80">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400 animate-pulse" />
+            <span className="text-[11px] font-black uppercase tracking-wider text-blue-700 dark:text-blue-400">
               Servicios Esenciales de Purificación, Tolima
             </span>
-            <span className="text-[11px] text-slate-400 font-medium capitalize">
-              • {currentDateFormatted}
+            <span className="text-slate-300 dark:text-slate-600">·</span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-300 font-medium capitalize">
+              {currentDateFormatted}
             </span>
           </div>
           <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
             Centro de Información Diaria Ciudadana
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Turnos de farmacias, rutas de aseo de hoy ({currentDayName}), estado vial y trámites en el Palacio Municipal.
+          <p className="text-xs text-slate-500 dark:text-slate-300 leading-relaxed max-w-2xl">
+            Turnos de farmacias, rutas de aseo de hoy ({currentDayName}), estado de accesos viales sobre el Río Magdalena y trámites en el Palacio Municipal.
           </p>
         </div>
 
-        {/* Quick Tab Selector */}
-        <div className="bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl flex flex-wrap gap-1 self-start lg:self-auto border border-slate-200/60 dark:border-slate-700/60">
+        {/* Modern Segmented Tab Selector */}
+        <div className="bg-slate-100 dark:bg-[#17264e] p-1.5 rounded-2xl flex flex-wrap gap-1 self-start lg:self-auto border border-slate-200/60 dark:border-slate-700/80">
           <button
             onClick={() => setActiveSubTab('farmacias')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer border ${
               activeSubTab === 'farmacias'
-                ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-xs ring-1 ring-slate-200 dark:ring-slate-600'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-[#111d3d] text-blue-900 dark:text-white shadow-xs font-black border-slate-200/80 dark:border-slate-700/90'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border-transparent'
             }`}
           >
             <Pill className="w-4 h-4 text-rose-500" />
@@ -213,10 +214,10 @@ export const CitizenQuickHub: React.FC<CitizenQuickHubProps> = ({
 
           <button
             onClick={() => setActiveSubTab('aseo')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer border ${
               activeSubTab === 'aseo'
-                ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-xs ring-1 ring-slate-200 dark:ring-slate-600'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-[#111d3d] text-blue-900 dark:text-white shadow-xs font-black border-slate-200/80 dark:border-slate-700/90'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border-transparent'
             }`}
           >
             <Trash2 className="w-4 h-4 text-emerald-500" />
@@ -225,10 +226,10 @@ export const CitizenQuickHub: React.FC<CitizenQuickHubProps> = ({
 
           <button
             onClick={() => setActiveSubTab('vias')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer border ${
               activeSubTab === 'vias'
-                ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-xs ring-1 ring-slate-200 dark:ring-slate-600'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-[#111d3d] text-blue-900 dark:text-white shadow-xs font-black border-slate-200/80 dark:border-slate-700/90'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border-transparent'
             }`}
           >
             <Car className="w-4 h-4 text-amber-500" />
@@ -237,13 +238,13 @@ export const CitizenQuickHub: React.FC<CitizenQuickHubProps> = ({
 
           <button
             onClick={() => setActiveSubTab('tramites')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer border ${
               activeSubTab === 'tramites'
-                ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-xs ring-1 ring-slate-200 dark:ring-slate-600'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-[#111d3d] text-blue-900 dark:text-white shadow-xs font-black border-slate-200/80 dark:border-slate-700/90'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border-transparent'
             }`}
           >
-            <Building2 className="w-4 h-4 text-purple-500" />
+            <Building2 className="w-4 h-4 text-indigo-500" />
             <span>Trámites Alcaldía</span>
           </button>
         </div>
@@ -268,18 +269,18 @@ export const CitizenQuickHub: React.FC<CitizenQuickHubProps> = ({
             {farmaciasPurificacion.slice(0, 3).map((farm) => (
               <div 
                 key={farm.id}
-                className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/80 hover:border-blue-300 dark:hover:border-blue-600 transition-all space-y-4 flex flex-col justify-between shadow-xs"
+                className="p-5 rounded-2xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-[#17264e] hover:border-blue-300 dark:hover:border-blue-500 transition-all space-y-4 flex flex-col justify-between shadow-xs"
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
                       farm.es24Horas 
-                        ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300' 
-                        : 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-300'
+                        ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700/80' 
+                        : 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700/80'
                     }`}>
                       {farm.es24Horas ? '🟢 Turno 24 Horas' : '🔵 De Turno Hoy'}
                     </span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 font-semibold">
+                    <span className="text-xs text-slate-500 dark:text-slate-300 flex items-center gap-1 font-semibold">
                       <Clock className="w-3.5 h-3.5 text-blue-500" />
                       {farm.es24Horas ? '24H' : 'Hoy'}
                     </span>
@@ -289,24 +290,24 @@ export const CitizenQuickHub: React.FC<CitizenQuickHubProps> = ({
                     {farm.nombre}
                   </h4>
                   
-                  <p className="text-xs text-slate-600 dark:text-slate-300 flex items-start gap-1.5 mt-2">
+                  <p className="text-xs text-slate-600 dark:text-slate-200 flex items-start gap-1.5 mt-2">
                     <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
                     <span>{farm.direccion}</span>
                   </p>
 
                   <div className="mt-2.5 flex flex-wrap gap-1">
                     {farm.servicios.map((srv, sIdx) => (
-                      <span key={sIdx} className="text-[10px] px-2 py-0.5 rounded-md bg-white dark:bg-slate-700/80 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
+                      <span key={sIdx} className="text-[10px] px-2 py-0.5 rounded-md bg-white dark:bg-[#111d3d] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80">
                         {srv}
                       </span>
                     ))}
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-slate-200 dark:border-slate-700 flex items-center gap-2">
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-700/80 flex items-center gap-2">
                   <a
                     href={`tel:${farm.telefono.replace(/\s+/g, '')}`}
-                    className="flex-1 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
+                    className="flex-1 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer border border-blue-600 dark:border-blue-500"
                   >
                     <PhoneCall className="w-3.5 h-3.5" />
                     <span>Llamar {farm.telefono}</span>
@@ -316,7 +317,7 @@ export const CitizenQuickHub: React.FC<CitizenQuickHubProps> = ({
                       href={`https://wa.me/${farm.whatsapp}?text=${encodeURIComponent('Hola, me comunico desde PurifiCalendario para consultar disponibilidad de medicamentos y domicilio.')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all flex items-center justify-center shadow-xs cursor-pointer"
+                      className="p-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all flex items-center justify-center shadow-xs cursor-pointer border border-emerald-600 dark:border-emerald-500"
                       title="Pedir por WhatsApp"
                     >
                       <MessageCircle className="w-4 h-4" />

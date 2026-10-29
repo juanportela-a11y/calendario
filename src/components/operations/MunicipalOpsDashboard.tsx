@@ -169,7 +169,7 @@ export const MunicipalOpsDashboard: React.FC = () => {
       </Suspense>
 
       {/* Organized Module Tabs Navigation */}
-      <div className="bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex items-center gap-2 overflow-x-auto">
+      <div className="bg-white dark:bg-[#111d3d] p-2 rounded-2xl border border-slate-200/90 dark:border-slate-700/80 shadow-xs flex items-center gap-2 overflow-x-auto">
         
         <button
           id="tab-btn-vias"

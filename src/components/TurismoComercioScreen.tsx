@@ -351,7 +351,7 @@ export const TurismoComercioScreen: React.FC<TurismoComercioScreenProps> = ({
               return (
                 <div 
                   key={sitio.id}
-                  className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group"
+                  className="bg-white dark:bg-[#111d3d] rounded-3xl overflow-hidden border border-slate-200/90 dark:border-slate-700/80 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group"
                 >
                   <div>
                     <div className="h-48 w-full relative overflow-hidden bg-slate-100 dark:bg-slate-800">

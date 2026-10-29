@@ -4,21 +4,90 @@
 
 @layer base {
   :root {
-    --color-primary: #2196f3;
-    --color-light-blue: #64b5f6;
-    --color-dark-blue: #0d47a1;
-    --color-bg-light: #f0f6ff;
+    /* Legacy variables for backwards compatibility */
+    --color-primary: #0284c7;
+    --color-light-blue: #38bdf8;
+    --color-dark-blue: #0369a1;
+    --color-bg-light: #f4f7fb;
+
+    /* Semantic Theme Tokens - Mode Day (Luz Natural) */
+    --surface-ground: #f4f7fb;          /* Fondo suave que evita deslumbramiento del blanco puro */
+    --surface-card: #ffffff;            /* Contenedor principal de tarjetas */
+    --surface-card-subtle: #f8fafc;     /* Tarjetas secundarias y campos de entrada */
+    --surface-elevated: #ffffff;        /* Modales, menús y popovers */
+    --surface-glass: rgba(255, 255, 255, 0.88);
+
+    /* Text & Content Tokens (WCAG AA Compliant >= 4.5:1) */
+    --text-primary: #0f172a;            /* Slate 900: Ratio > 13:1 contra --surface-card */
+    --text-secondary: #334155;          /* Slate 700: Ratio > 7.5:1 */
+    --text-muted: #475569;              /* Slate 600: Ratio > 5.2:1 (supera WCAG AA) */
+    --text-subtle: #64748b;             /* Slate 500: Indicadores secundarios y metadata */
+    --text-inverse: #ffffff;
+
+    /* Borders & Structural Hairlines */
+    --border-subtle: rgba(148, 163, 184, 0.25);
+    --border-default: #cbd5e1;          /* Slate 300: Límite tangible y definido */
+    --border-strong: #94a3b8;           /* Slate 400: Bordes con énfasis */
+
+    /* Brand Identity Accents (Purificación Azul & Oro Tolimense) */
+    --brand-primary: #0284c7;           /* Sky 600: Contraste óptimo en modo claro */
+    --brand-primary-hover: #0369a1;     /* Sky 700 */
+    --brand-dark-blue: #0369a1;         /* Azul cívico profundo */
+    --brand-accent-amber: #d97706;      /* Ámbar 600: Contraste accesible para alertas */
+    --brand-accent-emerald: #059669;    /* Verde 600: Estado en línea verificado */
+
+    /* Interactive States & Elevation */
+    --ring-focus: #0284c7;
+    --state-hover-overlay: rgba(15, 23, 42, 0.04);
+    --shadow-elevation: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
   }
 
   .dark {
-    --color-bg-light: #090f1d;
+    /* Legacy variables for backwards compatibility */
+    --color-primary: #38bdf8;
+    --color-light-blue: #7dd3fc;
+    --color-dark-blue: #38bdf8;
+    --color-bg-light: #060B18;
+
+    /* Semantic Theme Tokens - Mode Night (Nocturno Vibrante & Definido) */
+    --surface-ground: #060b18;          /* Profundidad oscura atmosférica con matiz azul noche */
+    --surface-card: #111d3d;            /* Fondo vibrante solicitado #111d3d para tarjetas principales */
+    --surface-card-subtle: #17264e;     /* Campos de entrada e islas secundarias elevadas */
+    --surface-elevated: #1a2b56;        /* Modales flotantes y menús contextuales */
+    --surface-glass: rgba(17, 29, 61, 0.88);
+
+    /* Text & Content Tokens (WCAG AA & AAA Compliant) */
+    --text-primary: #f8fafc;            /* Slate 50: Máxima luminosidad */
+    --text-secondary: #e2e8f0;          /* Slate 200: Ratio > 11:1 contra #111d3d */
+    --text-muted: #cbd5e1;              /* Slate 300: Gran contraste secundario contra #111d3d (Ratio > 7:1) */
+    --text-subtle: #94a3b8;             /* Slate 400: Metadata secundaria legible y nítida */
+    --text-inverse: #0f172a;
+
+    /* Borders & Structural Hairlines (1px nítido y visible para definición estructural) */
+    --border-subtle: rgba(56, 189, 248, 0.28);   /* Hairline cian sutil y luminosa de 1px */
+    --border-default: rgba(148, 163, 184, 0.35); /* Borde visible y nítido de 1px */
+    --border-strong: rgba(148, 163, 184, 0.60);
+
+    /* Brand Identity Accents (Ajuste de luminosidad para alto contraste nocturno) */
+    --brand-primary: #38bdf8;           /* Sky 400: Brillo legible en fondo oscuro */
+    --brand-primary-hover: #7dd3fc;     /* Sky 300 */
+    --brand-dark-blue: #38bdf8;         /* Reasigna el azul oscuro a cian legible */
+    --brand-accent-amber: #fbbf24;      /* Ámbar 400: Máxima legibilidad */
+    --brand-accent-emerald: #34d399;    /* Esmeralda 400: Señal viva */
+
+    /* Interactive States & Elevation */
+    --ring-focus: #38bdf8;
+    --state-hover-overlay: rgba(255, 255, 255, 0.05);
+    --shadow-elevation: 0 10px 30px -5px rgba(0, 0, 0, 0.7), 0 0 18px rgba(56, 189, 248, 0.15);
   }
 
   body {
-    background-color: var(--color-bg-light);
-    color: #1e293b;
+    background-color: var(--surface-ground);
+    color: var(--text-primary);
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    transition: background-color 0.25s ease, color 0.25s ease;
+    transition: background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+                color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     overflow-x: hidden;
     max-width: 100%;
   }
@@ -26,16 +95,22 @@
   html {
     overflow-x: hidden;
     max-width: 100%;
+    color-scheme: light dark;
   }
 
   .dark body,
   html.dark body {
-    background-color: #090f1d;
-    color: #f1f5f9;
+    background-color: var(--surface-ground);
+    background-image: 
+      radial-gradient(ellipse 90% 55% at 50% -10%, rgba(33, 150, 243, 0.15), transparent 70%),
+      radial-gradient(circle at 92% 80%, rgba(6, 182, 212, 0.08), transparent 40%),
+      radial-gradient(circle at 8% 45%, rgba(99, 102, 241, 0.07), transparent 35%);
+    background-attachment: fixed;
+    color: var(--text-primary);
   }
 }
 
-/* Custom scrollbars and subtle utilities */
+/* Custom scrollbars with luminous dark theme */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -44,18 +119,100 @@
   background: #f1f5f9;
 }
 .dark ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #060B18;
 }
 ::-webkit-scrollbar-thumb {
   background: #93c5fd;
   border-radius: 9999px;
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: #1e3a8a;
+  background: linear-gradient(180deg, #1e3a8a, #0284c7);
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.25);
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #3b82f6;
 }
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #2563eb;
+  background: linear-gradient(180deg, #2563eb, #0ea5e9);
 }
+
+/* Subtle microinteractions and dynamic entrance transitions */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Polished focus-visible rings adaptive to day and night themes */
+*:focus-visible {
+  outline: 2px solid var(--ring-focus);
+  outline-offset: 2px;
+  transition: outline-color 0.2s ease;
+}
+
+/* Ensure form controls maintain high contrast and clear boundaries in both themes */
+input, textarea, select {
+  color-scheme: light dark;
+}
+
+/* ==========================================================================
+   GLOBAL DARK MODE COLOR PALETTE OPTIMIZATION
+   - Card backgrounds unified to vibrant #111d3d (replacing muted 0d172e/slate-900)
+   - Secondary text contrast heightened to WCAG AAA standards (#cbd5e1 / #94a3b8)
+   - Structural 1px hairline border on interactive controls and cards
+   ========================================================================== */
+
+html.dark .dark\:bg-\[\#0D172E\],
+html.dark .dark\:bg-\[\#0c152a\],
+html.dark .dark\:bg-slate-900 {
+  background-color: #111d3d !important;
+}
+
+/* Secondary cards, islands and input receptacles */
+html.dark .dark\:bg-slate-800 {
+  background-color: #17264e !important;
+}
+
+/* Elevated contrast for secondary and muted copy in dark mode */
+html.dark .dark\:text-slate-400 {
+  color: #cbd5e1 !important; /* Slate 300: High-clarity secondary text (> 7.5:1 ratio) */
+}
+
+html.dark .dark\:text-slate-500 {
+  color: #94a3b8 !important; /* Slate 400: Clear metadata and timestamps (> 5:1 ratio) */
+}
+
+/* Crisp 1px structural borders in dark mode to prevent visual bleeding */
+html.dark .dark\:border-slate-800 {
+  border-color: rgba(148, 163, 184, 0.28) !important;
+}
+
+html.dark .dark\:border-slate-700 {
+  border-color: rgba(148, 163, 184, 0.40) !important;
+}
+
+/* Subtle but visible 1px border on all interactive controls (buttons, inputs, selects, tabs) */
+html.dark button:not([class*="border"]),
+html.dark a[role="button"]:not([class*="border"]),
+html.dark input:not([class*="border"]),
+html.dark select:not([class*="border"]),
+html.dark textarea:not([class*="border"]) {
+  border: 1px solid rgba(148, 163, 184, 0.26);
+}
+
+/* Ensure buttons with border-transparent or existing borders retain a clear 1px definition */
+html.dark button.border-transparent {
+  border-color: rgba(148, 163, 184, 0.22);
+}
+
+

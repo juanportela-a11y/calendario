@@ -93,24 +93,20 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [googleLoading, setGoogleLoading] = React.useState(false);
-  const [utilsMenuOpen, setUtilsMenuOpen] = React.useState(false);
-  const [navMenuOpen, setNavMenuOpen] = React.useState(false);
-  const utilsRef = React.useRef<HTMLDivElement>(null);
-  const navMenuRef = React.useRef<HTMLDivElement>(null);
+  const [isOnline, setIsOnline] = React.useState<boolean>(
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
 
-  // Close menus on outside click
   React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (utilsRef.current && !utilsRef.current.contains(event.target as Node)) {
-        setUtilsMenuOpen(false);
-      }
-      if (navMenuRef.current && !navMenuRef.current.contains(event.target as Node)) {
-        setNavMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
   }, []);
 
@@ -196,484 +192,307 @@ export const Navbar: React.FC<NavbarProps> = ({
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/95 dark:bg-slate-900/95 shadow-sm border-b border-blue-100 dark:border-slate-800 transition-colors backdrop-blur-md">
-      {/* Top Municipal Identity Bar */}
-      <div className="bg-[#0D47A1] dark:bg-slate-950 text-white py-1.5 px-3 sm:px-6 lg:px-8 text-xs font-medium border-b border-blue-900 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2 min-w-0">
-            <MapPin className="w-3.5 h-3.5 text-[#64B5F6] flex-shrink-0" />
-            <span className="truncate">Purificación, Tolima &bull; La Villa de las Palmas</span>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <button 
-              onClick={onOpenDdl}
-              className="flex items-center gap-1.5 text-blue-100 hover:text-white transition-colors bg-blue-950/70 hover:bg-blue-900 dark:bg-slate-800 dark:hover:bg-slate-700 px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer border border-blue-800/60 dark:border-slate-700 shadow-2xs"
-              title="Ver Arquitectura Hexagonal y Esquema MySQL"
-            >
-              <Database className="w-3.5 h-3.5 text-[#64B5F6]" />
-              <span>Base de Datos</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Navbar */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 w-full bg-white/95 dark:bg-[#0b1329]/95 shadow-sm border-b border-blue-100 dark:border-blue-900/40 backdrop-blur-md transition-colors">
+      {/* Barra de Navegación Principal Unificada */}
+      <div className="w-full max-w-[1600px] mx-auto px-2 sm:px-4 lg:px-6">
         <div className="flex items-center justify-between h-16 gap-2 lg:gap-3 min-w-0">
           
-          {/* Brand Logo */}
-          <div 
-            className="flex items-center gap-2 cursor-pointer flex-shrink-0" 
-            onClick={() => setActiveTab('inicio')}
-            title="Ir al inicio de PurifiCalendario"
-          >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0D47A1] to-[#2196F3] flex items-center justify-center text-white font-black text-lg shadow-sm border border-blue-300 dark:border-blue-500/30 flex-shrink-0">
-              P
-            </div>
-            <div>
-              <div className="flex items-center gap-1">
-                <span className="text-lg font-black tracking-tight text-[#0D47A1] dark:text-blue-400">Purifi</span>
-                <span className="text-lg font-extrabold text-[#2196F3] dark:text-blue-300">Calendario</span>
+          {/* Brand Logo & Indicador 24/7 en Tiempo Real */}
+          <div className="flex items-center gap-2.5 flex-shrink-0">
+            <div 
+              className="flex items-center gap-2 cursor-pointer group" 
+              onClick={() => setActiveTab('inicio')}
+              title="Ir al inicio de PurifiCalendario"
+            >
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0D47A1] to-[#2196F3] flex items-center justify-center text-white font-black text-lg shadow-sm border border-blue-300 dark:border-blue-500/30 flex-shrink-0 group-hover:scale-105 transition-transform">
+                P
               </div>
-              <p className="hidden xl:block text-[10px] text-slate-500 dark:text-slate-400 font-medium -mt-1 leading-tight">
-                Agenda Oficial y Avisos Comunitarios
-              </p>
+              <div>
+                <div className="flex items-center gap-1 leading-tight">
+                  <span className="text-lg font-black tracking-tight text-[#0D47A1] dark:text-blue-400">Purifi</span>
+                  <span className="text-lg font-extrabold text-[#2196F3] dark:text-blue-300">Calendario</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-none">
+                  <MapPin className="w-2.5 h-2.5 text-[#2196F3] flex-shrink-0" />
+                  <span className="truncate">Purificación, Tolima</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Indicador de Estado en Tiempo Real (24/7) */}
+            <div 
+              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black border transition-all shadow-2xs ${
+                isOnline
+                  ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30'
+                  : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30'
+              }`}
+              title={isOnline ? 'Plataforma en línea 24/7 • Conexión activa en tiempo real' : 'Modo offline • Guardando cambios de forma local'}
+            >
+              <span className="relative flex h-2 w-2">
+                {isOnline && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                )}
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+              </span>
+              <span className="hidden sm:inline tracking-tight">{isOnline ? 'En línea' : 'Modo offline'}</span>
             </div>
           </div>
 
-          {/* Desktop Navigation Links & Organized Menu */}
-          <nav className="hidden lg:flex items-center gap-1.5 p-1 rounded-2xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 backdrop-blur-md shadow-xs flex-shrink min-w-0">
-            {/* 1. Inicio */}
-            <button
-              onClick={() => setActiveTab('inicio')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                activeTab === 'inicio'
-                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs border border-slate-200/80 dark:border-slate-700/80'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/50'
-              }`}
-            >
-              <Sparkles className={`w-3.5 h-3.5 ${activeTab === 'inicio' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`} />
-              <span>Inicio</span>
-            </button>
-
-            {/* 2. Menú Desplegable Completo de Secciones (Incluye Reportar Falla) */}
-            <div className="relative" ref={navMenuRef}>
+          {/* Desktop Navigation & Actions - Unified in the same nav bar */}
+          <nav className="hidden lg:flex items-center justify-between gap-1.5 xl:gap-2 p-1 rounded-2xl bg-slate-100/90 dark:bg-[#111d3d]/90 border border-slate-200/80 dark:border-blue-900/60 backdrop-blur-md shadow-xs min-w-0 flex-1 max-w-fit">
+            {/* Tabs de Navegación Principales */}
+            <div className="flex items-center gap-1 xl:gap-1.5 min-w-0">
+              {/* 1. Inicio */}
               <button
-                type="button"
-                onClick={() => setNavMenuOpen(!navMenuOpen)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                  navMenuOpen || ['reportar', 'reportar-falla', 'calendario', 'operaciones', 'turismo', 'avisos', 'panel-organizador', 'panel-admin'].includes(activeTab)
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-700/60'
+                onClick={() => setActiveTab('inicio')}
+                className={`px-2 xl:px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                  activeTab === 'inicio'
+                    ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs border border-slate-200/80 dark:border-slate-700/80'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800/60 border border-transparent'
                 }`}
               >
-                <Menu className="w-3.5 h-3.5" />
-                <span>Menú de Servicios</span>
-                {activeTab === 'reportar' && (
-                  <span className="px-1.5 py-0.2 bg-amber-400 text-slate-950 font-black text-[9px] rounded-full">
-                    Fallas
-                  </span>
-                )}
-                <ChevronDown className={`w-3 h-3 transition-transform ${navMenuOpen ? 'rotate-180' : ''}`} />
+                <Sparkles className={`w-3.5 h-3.5 ${activeTab === 'inicio' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`} />
+                <span>Inicio</span>
               </button>
 
-              {/* Categorized Mega Dropdown Menu */}
-              {navMenuOpen && (
-                <div className="absolute left-0 mt-2 w-80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-3 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                  
-                  {/* Destacado: Reportar Falla Ciudadana */}
-                  <div className="pb-1 border-b border-slate-100 dark:border-slate-800">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2 block mb-1">
-                      Atención Ciudadana
-                    </span>
-                    <button
-                      onClick={() => {
-                        setActiveTab('reportar');
-                        setNavMenuOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        activeTab === 'reportar' || activeTab === 'reportar-falla'
-                          ? 'bg-[#2563EB] text-white shadow-xs'
-                          : 'bg-blue-50/90 dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200/80 dark:border-blue-800/80'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${activeTab === 'reportar' ? 'bg-white/20 text-white' : 'bg-[#2563EB] text-white shadow-xs'}`}>
-                          <Megaphone className="w-4 h-4" />
-                        </div>
-                        <div className="text-left">
-                          <div className="flex items-center gap-1.5">
-                            <span className="block font-black">Reportar Falla</span>
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                          </div>
-                          <span className={`text-[10px] font-normal ${activeTab === 'reportar' ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'}`}>
-                            Agua, luz, aseo o vías dañadas (+30 pts)
-                          </span>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-3.5 h-3.5 opacity-70" />
-                    </button>
-                  </div>
+              {/* 2. Reportar Falla */}
+              <button
+                onClick={() => setActiveTab('reportar')}
+                className={`px-2 xl:px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                  activeTab === 'reportar' || activeTab === 'reportar-falla'
+                    ? 'bg-blue-600 text-white shadow-xs border border-blue-600'
+                    : 'bg-blue-50/80 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200/60 dark:border-blue-800/60'
+                }`}
+                title="Reportar fallas de agua, alumbrado, basuras o vías (+30 PTS)"
+              >
+                <Megaphone className={`w-3.5 h-3.5 ${activeTab === 'reportar' || activeTab === 'reportar-falla' ? 'text-white' : 'text-blue-600 dark:text-blue-400'}`} />
+                <span>Reportar Falla</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              </button>
 
-                  {/* Categoría: Agenda & Eventos */}
-                  <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2 block mb-1">
-                      Comunidad & Eventos
-                    </span>
-                    <div className="space-y-1">
-                      <button
-                        onClick={() => {
-                          setActiveTab('calendario');
-                          setNavMenuOpen(false);
-                        }}
-                        className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                          activeTab === 'calendario'
-                            ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400'
-                            : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                            <Calendar className="w-4 h-4" />
-                          </div>
-                          <div className="text-left">
-                            <span className="block font-black">Calendario de Eventos</span>
-                            <span className="text-[10px] text-slate-400 font-normal">Festividades, talleres y ferias</span>
-                          </div>
-                        </div>
-                      </button>
+              {/* 3. Calendario */}
+              <button
+                onClick={() => setActiveTab('calendario')}
+                className={`px-2 xl:px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                  activeTab === 'calendario'
+                    ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs border border-slate-200/80 dark:border-slate-700/80'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800/60 border border-transparent'
+                }`}
+              >
+                <Calendar className={`w-3.5 h-3.5 ${activeTab === 'calendario' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`} />
+                <span>Calendario</span>
+              </button>
 
-                      <button
-                        onClick={() => {
-                          setActiveTab('avisos');
-                          setNavMenuOpen(false);
-                        }}
-                        className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                          activeTab === 'avisos'
-                            ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400'
-                            : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
-                            <ShieldAlert className="w-4 h-4" />
-                          </div>
-                          <div className="text-left">
-                            <span className="block font-black">Avisos Oficiales</span>
-                            <span className="text-[10px] text-slate-400 font-normal">Comunicados y alertas alcaldía</span>
-                          </div>
-                        </div>
-                      </button>
+              {/* 4. Operaciones */}
+              <button
+                onClick={() => setActiveTab('operaciones')}
+                className={`px-2 xl:px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                  activeTab === 'operaciones'
+                    ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs border border-slate-200/80 dark:border-slate-700/80'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800/60 border border-transparent'
+                }`}
+              >
+                <Activity className={`w-3.5 h-3.5 ${activeTab === 'operaciones' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`} />
+                <span>Operaciones</span>
+              </button>
+
+              {/* 5. Avisos */}
+              <button
+                onClick={() => setActiveTab('avisos')}
+                className={`px-2 xl:px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                  activeTab === 'avisos'
+                    ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs border border-slate-200/80 dark:border-slate-700/80'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800/60 border border-transparent'
+                }`}
+              >
+                <ShieldAlert className={`w-3.5 h-3.5 ${activeTab === 'avisos' ? 'text-amber-500' : 'text-slate-400'}`} />
+                <span>Avisos</span>
+              </button>
+
+              {/* 6. Rutas de Aseo */}
+              {onOpenServicesGuide && (
+                <button
+                  onClick={onOpenServicesGuide}
+                  className="px-2 xl:px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800/60 border border-transparent"
+                  title="Horarios EMPOPUR de Recolección de Aseo y Guía de Trámites"
+                >
+                  <Truck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                  <span className="hidden xl:inline">Rutas de Aseo</span>
+                  <span className="xl:hidden">Aseo</span>
+                </button>
+              )}
+
+              {/* 7. Paneles Especiales según Rol */}
+              {currentUser?.rol === 'organizador' && (
+                <button
+                  onClick={() => setActiveTab('panel-organizador')}
+                  className={`px-2 xl:px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                    activeTab === 'panel-organizador'
+                      ? 'bg-emerald-600 text-white shadow-xs border border-emerald-600'
+                      : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-300 dark:border-emerald-800'
+                  }`}
+                >
+                  <PlusCircle className="w-3.5 h-3.5" />
+                  <span>Organizador</span>
+                </button>
+              )}
+
+              {currentUser?.rol === 'administrador' && (
+                <button
+                  onClick={() => setActiveTab('panel-admin')}
+                  className={`px-2 xl:px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                    activeTab === 'panel-admin'
+                      ? 'bg-blue-900 text-white shadow-xs border border-blue-700'
+                      : 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40 border border-amber-300 dark:border-amber-800'
+                  }`}
+                >
+                  <ShieldAlert className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                  <span>Admin</span>
+                </button>
+              )}
+            </div>
+
+            {/* Separador vertical sutil entre pestañas y controles */}
+            <div className="w-px h-6 bg-slate-300/80 dark:bg-slate-700/80 mx-1 flex-shrink-0" />
+
+            {/* Acciones de Usuario, Puntos y Controles Integrados */}
+            <div className="flex items-center gap-1.5 xl:gap-2 flex-shrink-0">
+              {/* Acceso a Base de Datos */}
+              <button
+                type="button"
+                onClick={onOpenDdl}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-blue-200/80 dark:border-blue-800/60 bg-blue-50/70 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-xs font-bold transition-all cursor-pointer whitespace-nowrap shadow-2xs"
+                title="Ver Esquema MySQL y Arquitectura Hexagonal"
+              >
+                <Database className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <span className="hidden xl:inline">Base de Datos</span>
+                <span className="xl:hidden">BD</span>
+              </button>
+
+              {/* PurifiPuntos Cívicos */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('operaciones')}
+                className={`flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-xl border transition-all cursor-pointer text-xs font-black shadow-2xs whitespace-nowrap ${
+                  activeTab === 'operaciones'
+                    ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                    : 'bg-amber-50/90 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 hover:border-amber-300'
+                }`}
+                title="PurifiPuntos Cívicos y Recompensas Ciudadanas"
+              >
+                <Trophy className={`w-3.5 h-3.5 ${activeTab === 'operaciones' ? 'text-white' : 'text-amber-500'}`} />
+                <span>{currentUser ? `${userPoints} PTS` : 'Puntos'}</span>
+              </button>
+
+              {/* Botón Prominente Modo Día / Noche */}
+              <button
+                type="button"
+                onClick={onToggleDarkMode}
+                className={`flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-xl border transition-all duration-300 cursor-pointer shadow-2xs text-xs font-black select-none whitespace-nowrap ${
+                  darkMode
+                    ? 'bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-indigo-500/40 text-cyan-200 shadow-[0_0_12px_rgba(56,189,248,0.25)] hover:border-cyan-400'
+                    : 'bg-gradient-to-r from-amber-50 to-orange-50/80 border-amber-200 text-amber-900 hover:border-amber-300 hover:shadow-xs'
+                }`}
+                title={darkMode ? 'Modo Noche activo • Clic para Modo Día' : 'Modo Día activo • Clic para Modo Noche'}
+              >
+                <div
+                  className={`w-4 h-4 rounded-md flex items-center justify-center transition-all ${
+                    darkMode
+                      ? 'bg-gradient-to-tr from-indigo-600 to-cyan-500 text-white'
+                      : 'bg-gradient-to-tr from-amber-400 to-orange-400 text-white'
+                  }`}
+                >
+                  {darkMode ? <Moon className="w-2.5 h-2.5 fill-indigo-200 text-white" /> : <Sun className="w-2.5 h-2.5 text-white" />}
+                </div>
+                <span>{darkMode ? 'Noche' : 'Día'}</span>
+              </button>
+
+              {/* Notificaciones Cívicas */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('notificaciones')}
+                className={`relative p-2 rounded-xl border transition-all cursor-pointer shadow-2xs ${
+                  activeTab === 'notificaciones'
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                    : 'border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:border-blue-300 dark:hover:border-blue-700 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-slate-700'
+                }`}
+                title="Notificaciones cívicas"
+                aria-label="Ver notificaciones"
+              >
+                <Bell className="w-3.5 h-3.5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full ring-2 ring-white dark:ring-slate-900 animate-pulse">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Perfil de Usuario o Autenticación */}
+              {currentUser ? (
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <button
+                    onClick={() => setActiveTab('perfil')}
+                    className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition-all text-left cursor-pointer ${
+                      activeTab === 'perfil'
+                        ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-300 dark:border-blue-700 shadow-xs'
+                        : 'border-slate-200/80 dark:border-slate-700/80 hover:border-blue-300 dark:hover:border-blue-500 bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-700'
+                    }`}
+                    title={`Ver Mi Perfil (${currentUser.nombre_usuario}) - Clic para ver perfil y ajustes`}
+                  >
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-500 text-white font-black flex items-center justify-center text-[11px] shadow-2xs flex-shrink-0">
+                      {currentUser.nombre_usuario.charAt(0).toUpperCase()}
                     </div>
-                  </div>
-
-                  {/* Categoría: Operaciones & Servicios Públicos */}
-                  <div className="pt-1 border-t border-slate-100 dark:border-slate-800">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2 block mb-1">
-                      Servicios Cívicos & Operaciones
-                    </span>
-                    <div className="space-y-1">
-                      <button
-                        onClick={() => {
-                          setActiveTab('operaciones');
-                          setNavMenuOpen(false);
-                        }}
-                        className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                          activeTab === 'operaciones'
-                            ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400'
-                            : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                            <Activity className="w-4 h-4" />
-                          </div>
-                          <div className="text-left">
-                            <span className="block font-black">Centro de Operaciones</span>
-                            <span className="text-[10px] text-slate-400 font-normal">Monitoreo y mapa de incidencias</span>
-                          </div>
-                        </div>
-                      </button>
-
-                      {onOpenServicesGuide && (
-                        <button
-                          onClick={() => {
-                            onOpenServicesGuide();
-                            setNavMenuOpen(false);
-                          }}
-                          className="w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-all cursor-pointer"
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-lg bg-teal-100 dark:bg-teal-900/60 flex items-center justify-center text-teal-600 dark:text-teal-400">
-                              <Truck className="w-4 h-4" />
-                            </div>
-                            <div className="text-left">
-                              <span className="block font-black">Rutas de Aseo & Trámites</span>
-                              <span className="text-[10px] text-slate-400 font-normal">Horarios EMPOPUR y trámites</span>
-                            </div>
-                          </div>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Categoría: Paneles Especiales según Rol */}
-                  {(currentUser?.rol === 'organizador' || currentUser?.rol === 'administrador') && (
-                    <div className="pt-1 border-t border-slate-100 dark:border-slate-800 space-y-1">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2 block mb-1">
-                        Gestión & Administración
+                    <div className="max-w-[75px] xl:max-w-[100px]">
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block truncate leading-tight">
+                        {currentUser.nombre_usuario}
                       </span>
-                      {currentUser?.rol === 'organizador' && (
-                        <button
-                          onClick={() => {
-                            setActiveTab('panel-organizador');
-                            setNavMenuOpen(false);
-                          }}
-                          className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                            activeTab === 'panel-organizador'
-                              ? 'bg-emerald-600 text-white'
-                              : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <PlusCircle className="w-4 h-4" />
-                            <span>Panel de Organizador</span>
-                          </div>
-                        </button>
-                      )}
-                      {currentUser?.rol === 'administrador' && (
-                        <button
-                          onClick={() => {
-                            setActiveTab('panel-admin');
-                            setNavMenuOpen(false);
-                          }}
-                          className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                            activeTab === 'panel-admin'
-                              ? 'bg-blue-900 text-white'
-                              : 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 hover:bg-amber-100'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <ShieldAlert className="w-4 h-4" />
-                            <span>Panel de Administración</span>
-                          </div>
-                        </button>
-                      )}
+                      <div className="mt-0.5">
+                        {getRoleBadge(currentUser.rol)}
+                      </div>
                     </div>
-                  )}
+                  </button>
 
+                  {onLogout && (
+                    <button
+                      onClick={onLogout}
+                      className="p-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-800/80 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 dark:hover:text-red-400 transition-all cursor-pointer"
+                      title="Cerrar sesión"
+                    >
+                      <span className="sr-only">Cerrar sesión</span>
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              ) : (
+                /* Joined Connected Auth Button Group */
+                <div className="inline-flex items-center rounded-xl shadow-2xs border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 p-0.5 overflow-hidden flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleGoogleQuickSignIn}
+                    disabled={googleLoading}
+                    className="px-2 xl:px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
+                    title="Acceder con Google"
+                  >
+                    <GoogleIcon className="w-3.5 h-3.5" />
+                    <span className="hidden xl:inline">Google</span>
+                  </button>
+                  
+                  <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-0.5" />
+
+                  <button
+                    onClick={onOpenLogin || onOpenAuth}
+                    className="px-2.5 xl:px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-2xs whitespace-nowrap"
+                    title="Iniciar Sesión"
+                  >
+                    <User className="w-3.5 h-3.5" />
+                    <span>Iniciar Sesión</span>
+                  </button>
                 </div>
               )}
             </div>
           </nav>
-
-          {/* User Profile, Unified Menu & Auth Container */}
-          <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
-            {/* PurifiPuntos Cívicos por fuera */}
-            <button
-              type="button"
-              onClick={() => setActiveTab('operaciones')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all cursor-pointer text-xs font-black shadow-2xs ${
-                activeTab === 'operaciones'
-                  ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
-                  : 'bg-amber-50/90 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 hover:border-amber-300'
-              }`}
-              title="PurifiPuntos Cívicos y Recompensas Ciudadanas"
-            >
-              <Trophy className={`w-3.5 h-3.5 ${activeTab === 'operaciones' ? 'text-white' : 'text-amber-500'}`} />
-              <span>{currentUser ? `${userPoints} PTS` : 'Puntos Cívicos'}</span>
-            </button>
-
-            {/* Menú de Herramientas Cívicas y Servicios Municipales */}
-            <div className="relative" ref={utilsRef}>
-              <button
-                type="button"
-                onClick={() => setUtilsMenuOpen(!utilsMenuOpen)}
-                className={`relative px-3 py-1.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs text-xs font-bold ${
-                  utilsMenuOpen
-                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                    : 'border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:border-blue-300 dark:hover:border-blue-700 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-slate-700'
-                }`}
-                title="Herramientas Cívicas, Notificaciones y Ajustes"
-              >
-                <Sparkles className={`w-3.5 h-3.5 ${utilsMenuOpen ? 'text-cyan-200' : 'text-blue-600 dark:text-blue-400'}`} />
-                <span>Herramientas</span>
-                {unreadCount > 0 && (
-                  <span className="w-2 h-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900 animate-pulse" />
-                )}
-                <ChevronDown className={`w-3 h-3 transition-transform ${utilsMenuOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {/* Utilities Dropdown Menu */}
-              {utilsMenuOpen && (
-                <div className="absolute right-0 mt-2 w-72 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl p-2.5 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                  <div className="px-2 pb-1.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-                      <Sparkles className="w-3 h-3 text-blue-500" />
-                      Herramientas & Ajustes
-                    </span>
-                    {unreadCount > 0 && (
-                      <span className="text-[10px] font-black px-1.5 py-0.2 rounded-full bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-300">
-                        {unreadCount} nuevas
-                      </span>
-                    )}
-                  </div>
-
-                  {/* 1. Asistente Virtual PurifiGuía */}
-                  {onOpenAssistant && (
-                    <button
-                      onClick={() => {
-                        onOpenAssistant();
-                        setUtilsMenuOpen(false);
-                      }}
-                      className="w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-slate-800/80 hover:from-blue-100 hover:to-indigo-100 text-blue-800 dark:text-blue-200 border border-blue-100 dark:border-blue-900/40 transition-all cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-2xs">
-                          <Bot className="w-4 h-4 text-cyan-200" />
-                        </div>
-                        <div className="text-left">
-                          <span className="block font-black">PurifiGuía IA</span>
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">Asistente de eventos y trámites</span>
-                        </div>
-                      </div>
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
-                        Activo
-                      </span>
-                    </button>
-                  )}
-
-                  {/* 2. Rutas de Aseo & Trámites */}
-                  {onOpenServicesGuide && (
-                    <button
-                      onClick={() => {
-                        onOpenServicesGuide();
-                        setUtilsMenuOpen(false);
-                      }}
-                      className="w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-all cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center">
-                          <Truck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div className="text-left">
-                          <span className="block font-bold">Rutas de Aseo & Servicios</span>
-                          <span className="text-[10px] text-slate-400 font-normal">Horarios EMPUR y trámites</span>
-                        </div>
-                      </div>
-                      <span className="text-[10px] text-slate-400">&rarr;</span>
-                    </button>
-                  )}
-
-                  <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
-
-                  {/* 3. Notificaciones */}
-                  <button
-                    onClick={() => {
-                      setActiveTab('notificaciones');
-                      setUtilsMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      activeTab === 'notificaciones'
-                        ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400'
-                        : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center">
-                        <Bell className="w-4 h-4 text-blue-500" />
-                      </div>
-                      <span>Notificaciones</span>
-                    </div>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold">
-                      {unreadCount > 0 ? `${unreadCount} nuevas` : 'Ver'}
-                    </span>
-                  </button>
-
-                  {/* 4. Modo Claro / Oscuro */}
-                  <button
-                    onClick={onToggleDarkMode}
-                    className="w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-all cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center">
-                        {darkMode ? <Moon className="w-4 h-4 text-indigo-400" /> : <Sun className="w-4 h-4 text-amber-500" />}
-                      </div>
-                      <span>Tema {darkMode ? 'Oscuro' : 'Claro'}</span>
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold">
-                      {darkMode ? 'Noche' : 'Día'}
-                    </span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* User Profile / Joined Auth Action Group */}
-            {currentUser ? (
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                <button
-                  onClick={() => setActiveTab('perfil')}
-                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition-all text-left cursor-pointer ${
-                    activeTab === 'perfil'
-                      ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-300 dark:border-blue-700 shadow-xs'
-                      : 'border-slate-200/80 dark:border-slate-700/80 hover:border-blue-300 dark:hover:border-blue-500 bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-700'
-                  }`}
-                  title={`Ver Mi Perfil (${currentUser.nombre_usuario}) - Clic para ver perfil y ajustes`}
-                >
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-500 text-white font-black flex items-center justify-center text-xs shadow-2xs flex-shrink-0">
-                    {currentUser.nombre_usuario.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="max-w-[85px] xl:max-w-[115px]">
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block truncate leading-tight">
-                      {currentUser.nombre_usuario}
-                    </span>
-                    <div className="mt-0.5">
-                      {getRoleBadge(currentUser.rol)}
-                    </div>
-                  </div>
-                </button>
-
-                {onLogout && (
-                  <button
-                    onClick={onLogout}
-                    className="p-2 rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-800/80 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 dark:hover:text-red-400 transition-all cursor-pointer"
-                    title="Cerrar sesión"
-                  >
-                    <span className="sr-only">Cerrar sesión</span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-            ) : (
-              /* Joined Connected Auth Button Group */
-              <div className="inline-flex items-center rounded-xl shadow-2xs border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 p-0.5 overflow-hidden flex-shrink-0">
-                <button
-                  type="button"
-                  onClick={handleGoogleQuickSignIn}
-                  disabled={googleLoading}
-                  className="px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
-                  title="Acceder con Google"
-                >
-                  <GoogleIcon className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Google</span>
-                </button>
-                
-                <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-0.5" />
-
-                <button
-                  onClick={onOpenLogin || onOpenAuth}
-                  className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-2xs"
-                  title="Iniciar Sesión"
-                >
-                  <User className="w-3.5 h-3.5" />
-                  <span>Iniciar Sesión</span>
-                </button>
-              </div>
-            )}
-          </div>
 
           {/* Mobile / Tablet Menu Button & Quick Actions */}
           <div className="lg:hidden flex items-center gap-1.5 flex-shrink-0">
@@ -718,10 +537,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Dark Mode on Mobile */}
             <button
               onClick={onToggleDarkMode}
-              className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-              title="Alternar modo oscuro"
+              className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                darkMode
+                  ? 'bg-slate-800 text-cyan-300 border-indigo-500/40 shadow-xs'
+                  : 'bg-amber-50 text-amber-700 border-amber-200 shadow-xs'
+              }`}
+              title={darkMode ? 'Cambiar a modo claro (Día)' : 'Cambiar a modo oscuro (Noche)'}
             >
-              {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+              {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-700" />}
             </button>
 
             {/* Hamburger Toggle */}
@@ -873,6 +696,36 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span>Rutas de Aseo & Trámites</span>
             </button>
           )}
+
+          {/* Mobile Dark Mode Toggle */}
+          <button
+            onClick={onToggleDarkMode}
+            type="button"
+            className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between border cursor-pointer ${
+              darkMode
+                ? 'bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-indigo-500/40 text-indigo-100 shadow-[0_0_15px_-3px_rgba(99,102,241,0.3)]'
+                : 'bg-gradient-to-r from-amber-50 to-orange-50/70 border-amber-200 text-amber-950 shadow-xs'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                darkMode ? 'bg-gradient-to-tr from-indigo-600 to-cyan-500 text-white shadow-[0_0_10px_rgba(56,189,248,0.5)]' : 'bg-gradient-to-tr from-amber-400 to-orange-400 text-white shadow-xs'
+              }`}>
+                {darkMode ? <Moon className="w-3.5 h-3.5 fill-indigo-200" /> : <Sun className="w-3.5 h-3.5" />}
+              </div>
+              <div>
+                <span className="block font-black">{darkMode ? 'Modo Nocturno Activo' : 'Modo Diurno Activo'}</span>
+                <span className="text-[10px] opacity-75 font-normal">{darkMode ? 'Atmósfera cívica neón' : 'Contraste diurno'}</span>
+              </div>
+            </div>
+            <div className={`w-10 h-5 rounded-full p-0.5 flex items-center border ${
+              darkMode ? 'bg-indigo-900/90 border-indigo-400/50 justify-end' : 'bg-amber-200 border-amber-300 justify-start'
+            }`}>
+              <div className="w-4 h-4 rounded-full bg-white shadow-xs flex items-center justify-center text-[8px]">
+                {darkMode ? '🌙' : '☀️'}
+              </div>
+            </div>
+          </button>
 
           <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
             {currentUser ? (

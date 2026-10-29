@@ -105,7 +105,7 @@ export const AvisosScreen: React.FC<AvisosScreenProps> = ({
       </div>
 
       {/* Filter Tabs & Search */}
-      <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="bg-white dark:bg-[#111d3d] p-5 rounded-2xl border border-slate-200/90 dark:border-slate-700/80 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
         
         {/* Type Filters */}
         <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
@@ -119,10 +119,10 @@ export const AvisosScreen: React.FC<AvisosScreenProps> = ({
             <button
               key={tab.id}
               onClick={() => setFilterType(tab.id)}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
                 filterType === tab.id
-                  ? 'bg-[#0D47A1] dark:bg-blue-600 text-white shadow-sm'
-                  : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-750'
+                  ? 'bg-[#0D47A1] dark:bg-blue-600 text-white shadow-sm border-transparent'
+                  : 'bg-slate-50 dark:bg-[#17264e] text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1c3061] border-slate-200 dark:border-slate-700/80'
               }`}
             >
               {tab.label}
@@ -138,7 +138,7 @@ export const AvisosScreen: React.FC<AvisosScreenProps> = ({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Buscar por barrio o palabra..."
-            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:bg-white dark:focus:bg-slate-750 focus:border-[#2196F3] focus:outline-none"
+            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17264e] border border-slate-200 dark:border-slate-700/80 text-slate-900 dark:text-white placeholder-slate-400 focus:bg-white dark:focus:bg-[#17264e] focus:border-[#2196F3] focus:outline-none"
           />
         </div>
       </div>
@@ -146,10 +146,10 @@ export const AvisosScreen: React.FC<AvisosScreenProps> = ({
       {/* Notice List */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filteredNotices.length === 0 ? (
-          <div className="col-span-full p-12 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-            <Info className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-            <p className="text-sm font-bold text-slate-700 dark:text-slate-300">No se encontraron avisos comunitarios</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Prueba seleccionando otra categoría o limpiando la búsqueda.</p>
+          <div className="col-span-full p-12 text-center bg-white dark:bg-[#111d3d] rounded-2xl border border-slate-200/90 dark:border-slate-700/80">
+            <Info className="w-10 h-10 text-slate-300 dark:text-slate-500 mx-auto mb-2" />
+            <p className="text-sm font-bold text-slate-700 dark:text-slate-200">No se encontraron avisos comunitarios</p>
+            <p className="text-xs text-slate-500 dark:text-slate-300 mt-1">Prueba seleccionando otra categoría o limpiando la búsqueda.</p>
           </div>
         ) : (
           filteredNotices.map((notice) => {
@@ -159,10 +159,10 @@ export const AvisosScreen: React.FC<AvisosScreenProps> = ({
             return (
               <div
                 key={notice.id_aviso}
-                className={`bg-white dark:bg-slate-900 rounded-2xl p-6 border shadow-sm transition-all hover:shadow-md relative space-y-4 ${
+                className={`bg-white dark:bg-[#111d3d] rounded-2xl p-6 border shadow-sm transition-all hover:shadow-md relative space-y-4 ${
                   notice.urgente 
-                    ? 'border-amber-400/80 dark:border-amber-600/60 bg-amber-50/20 dark:bg-amber-950/20' 
-                    : 'border-slate-200 dark:border-slate-800'
+                    ? 'border-amber-400/80 dark:border-amber-600/80 bg-amber-50/20 dark:bg-amber-950/20' 
+                    : 'border-slate-200/90 dark:border-slate-700/80'
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">

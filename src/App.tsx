@@ -79,7 +79,7 @@ export default function App() {
     if (saved !== null) {
       return saved === 'true';
     }
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
   useEffect(() => {
@@ -92,7 +92,22 @@ export default function App() {
     }
   }, [darkMode]);
 
+  // Synchronize dynamically with operating system theme changes when user has not manually locked a preference
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemThemeChange = (e: MediaQueryListEvent) => {
+      const manualLock = localStorage.getItem('purificheck_dark_manual');
+      if (!manualLock) {
+        setDarkMode(e.matches);
+      }
+    };
+    mediaQuery.addEventListener('change', handleSystemThemeChange);
+    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
+  }, []);
+
   const toggleDarkMode = () => {
+    localStorage.setItem('purificheck_dark_manual', 'true');
     setDarkMode(prev => !prev);
   };
   
@@ -711,7 +726,7 @@ export default function App() {
   const unreadNotifsCount = notifications.filter(n => !n.leida).length;
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#F0F6FF] dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col font-sans selection:bg-[#2196F3] selection:text-white transition-colors duration-200">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#F4F7FB] dark:bg-[#060B18] text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-sky-500 selection:text-white transition-colors duration-300">
       
       {/* Navigation Bar */}
       <Navbar
@@ -735,7 +750,7 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-10 sm:space-y-12">
 
         {/* Single Optimal Urgent Notification Banner */}
         {urgentNotice && (
@@ -753,7 +768,7 @@ export default function App() {
 
         {/* TAB 1: INICIO (HOME SCREEN) */}
         {activeTab === 'inicio' && (
-          <div className="space-y-8">
+          <div className="space-y-10 sm:space-y-12">
             {/* Hero Presentation */}
             <HeroBanner
               onExploreEvents={() => setActiveTab('calendario')}
@@ -790,14 +805,25 @@ export default function App() {
             />
 
             {/* Quick Category Badges */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider text-[#0D47A1] dark:text-blue-400">
-                  Categorías Principales del Municipio
-                </h3>
+            <div className="bg-white dark:bg-[#111d3d] p-6 sm:p-8 rounded-3xl border border-slate-200/90 dark:border-slate-700/80 shadow-sm dark:shadow-[0_4px_25px_rgba(0,0,0,0.4)] space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-sky-600 dark:bg-sky-400" />
+                    <span className="text-[11px] font-black uppercase tracking-widest text-sky-700 dark:text-sky-400">
+                      Explora por Temática
+                    </span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                    Categorías Principales de la Agenda Municipal
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-300">
+                    Filtra actividades cívicas, ferias folclóricas, recreación, deporte y salud pública
+                  </p>
+                </div>
                 <button 
                   onClick={() => setActiveTab('calendario')}
-                  className="text-xs font-bold text-[#2196F3] dark:text-blue-400 hover:underline flex items-center gap-1"
+                  className="px-3.5 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#0D47A1] dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/80 text-xs font-bold hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
                 >
                   <span>Ver todas</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -812,43 +838,54 @@ export default function App() {
                       setSelectedCategoryFilter(cat.id_categoria);
                       setActiveTab('eventos');
                     }}
-                    className="p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-500 bg-slate-50 dark:bg-slate-800/60 hover:bg-blue-50/50 dark:hover:bg-slate-800 transition-all text-left flex flex-col justify-between group"
+                    className="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 hover:border-sky-500 dark:hover:border-sky-400 bg-slate-50/90 dark:bg-[#17264e] hover:bg-white dark:hover:bg-[#1c3061] hover:shadow-md transition-all duration-200 text-left flex flex-col justify-between group cursor-pointer transform hover:-translate-y-1"
                   >
-                    <span 
-                      className="w-3 h-3 rounded-full mb-2 group-hover:scale-125 transition-transform" 
-                      style={{ backgroundColor: cat.color }}
-                    />
-                    <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{cat.nombre}</p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
-                      {events.filter(e => e.id_categoria === cat.id_categoria).length} eventos
-                    </p>
+                    <div className="flex items-center justify-between mb-3">
+                      <span 
+                        className="w-3.5 h-3.5 rounded-full shadow-xs group-hover:scale-125 transition-transform" 
+                        style={{ backgroundColor: cat.color }}
+                      />
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-slate-200/60 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300/40 dark:border-slate-600/60">
+                        {events.filter(e => e.id_categoria === cat.id_categoria).length}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-slate-900 dark:text-white leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{cat.nombre}</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-300 mt-1">Actividades</p>
+                    </div>
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Featured & Upcoming Events Section */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-black text-slate-900 dark:text-white">
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200/80 dark:border-slate-800 pb-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-500" />
+                    <span className="text-[11px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">
+                      Agenda Municipal Viva
+                    </span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
                     Próximos Eventos Destacados
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Actividades culturales, deportivas y jornadas de salud agendadas en Purificación
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-300 max-w-xl">
+                    Actividades culturales, torneos deportivos, festivales y jornadas comunitarias en Purificación
                   </p>
                 </div>
 
                 <button
                   onClick={() => setActiveTab('eventos')}
-                  className="px-4 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#0D47A1] dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-bold hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors flex items-center gap-1.5"
+                  className="px-5 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black transition-all flex items-center gap-2 shadow-sm hover:shadow-md cursor-pointer self-start sm:self-auto transform hover:-translate-y-0.5"
                 >
-                  <span>Ver todos los eventos</span>
+                  <span>Explorar Todos ({events.length})</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
                 {events.slice(0, 6).map((evt) => (
                   <EventCard
                     key={evt.id_evento}
@@ -902,13 +939,13 @@ export default function App() {
         {/* TAB 3: EVENTOS (DIRECTORY) */}
         {activeTab === 'eventos' && (
           <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+            <div className="bg-white dark:bg-[#111d3d] p-6 rounded-3xl border border-slate-200/90 dark:border-slate-700/80 shadow-sm space-y-5">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-2xl font-black text-slate-900 dark:text-white">
                     Directorio de Eventos
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-slate-500 dark:text-slate-300">
                     Filtra y explora las actividades por categoría, palabra clave o rango de fechas
                   </p>
                 </div>
@@ -920,15 +957,15 @@ export default function App() {
                     value={searchEventText}
                     onChange={(e) => setSearchEventText(e.target.value)}
                     placeholder="Buscar evento, lugar u organizador..."
-                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 focus:bg-white dark:focus:bg-slate-800 focus:outline-none"
+                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#17264e] text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700/90 focus:bg-white dark:focus:bg-[#17264e] focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* Date Range Picker Bar */}
-              <div className="bg-slate-50 dark:bg-slate-850 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-3">
+              <div className="bg-slate-50 dark:bg-[#17264e] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-3">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200">
                     <CalendarRange className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                     <span>Filtrar por Rango Temporal:</span>
                   </div>
@@ -945,10 +982,10 @@ export default function App() {
                       <button
                         key={p.id}
                         onClick={() => handleApplyDatePreset(p.id as any)}
-                        className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all border ${
+                        className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all border cursor-pointer ${
                           (!eventStartDate && !eventEndDate && p.id === 'all')
                             ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                            : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750'
+                            : 'bg-white dark:bg-[#111d3d] text-slate-600 dark:text-slate-200 border-slate-200 dark:border-slate-700/80 hover:bg-slate-100 dark:hover:bg-[#1c3061]'
                         }`}
                       >
                         {p.label}
@@ -958,7 +995,7 @@ export default function App() {
                     {(eventStartDate || eventEndDate) && (
                       <button
                         onClick={() => handleApplyDatePreset('all')}
-                        className="px-2 py-1 text-[11px] font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg flex items-center gap-1 transition-all"
+                        className="px-2 py-1 text-[11px] font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg flex items-center gap-1 transition-all cursor-pointer border border-red-200 dark:border-red-800/60"
                         title="Limpiar filtro de fechas"
                       >
                         <X className="w-3.5 h-3.5" />
@@ -995,10 +1032,10 @@ export default function App() {
               <div className="flex items-center gap-2 overflow-x-auto pt-1">
                 <button
                   onClick={() => setSelectedCategoryFilter(null)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-extrabold transition-all border whitespace-nowrap ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-extrabold transition-all border whitespace-nowrap cursor-pointer ${
                     selectedCategoryFilter === null
-                      ? 'bg-[#0D47A1] text-white border-[#0D47A1] shadow-xs'
-                      : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750'
+                      ? 'bg-blue-600 dark:bg-blue-500 text-white border-blue-600 dark:border-blue-500 shadow-xs'
+                      : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
                   }`}
                 >
                   Todas ({events.length})
@@ -1011,8 +1048,8 @@ export default function App() {
                     <button
                       key={cat.id_categoria}
                       onClick={() => setSelectedCategoryFilter(isSelected ? null : cat.id_categoria)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border whitespace-nowrap flex items-center gap-1.5 ${
-                        isSelected ? 'text-white shadow-xs' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750'
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+                        isSelected ? 'text-white shadow-xs' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
                       }`}
                       style={{
                         backgroundColor: isSelected ? cat.color : undefined,
