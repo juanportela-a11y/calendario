@@ -716,6 +716,8 @@ export default function App() {
   const handleSelectUser = (u: Usuario) => {
     setCurrentUser(u);
     localStorage.setItem('purifi_active_user', JSON.stringify(u));
+    setShowAuthModal(false);
+    showToast(`✓ Rol activado: ${u.nombre_usuario} (${u.rol?.toUpperCase()})`);
   };
 
   const openAuthWithTab = (tab: 'login' | 'register' | 'switch' = 'login') => {
@@ -747,10 +749,11 @@ export default function App() {
         onOpenEmergencies={() => setShowEmergenciesModal(true)}
         onOpenServicesGuide={() => setShowServicesGuideModal(true)}
         onOpenAssistant={() => setShowAssistantModal(true)}
+        onOpenRolesDemo={() => openAuthWithTab('switch')}
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-10 sm:space-y-12">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-10 space-y-6 sm:space-y-10">
 
         {/* Single Optimal Urgent Notification Banner */}
         {urgentNotice && (
@@ -768,7 +771,7 @@ export default function App() {
 
         {/* TAB 1: INICIO (HOME SCREEN) */}
         {activeTab === 'inicio' && (
-          <div className="space-y-10 sm:space-y-12">
+          <div className="space-y-6 sm:space-y-10">
             {/* Hero Presentation */}
             <HeroBanner
               onExploreEvents={() => setActiveTab('calendario')}
@@ -1310,6 +1313,7 @@ export default function App() {
         onOpenAssistant={() => setShowAssistantModal(true)}
         onOpenEmergencies={() => setShowEmergenciesModal(true)}
         onOpenReportar={() => setActiveTab('reportar')}
+        onOpenDdl={() => setShowDdlModal(true)}
       />
 
       {/* Confirmation Modal for Permanent Event & Notice Deletion */}

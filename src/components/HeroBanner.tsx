@@ -52,7 +52,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/10 via-transparent to-black/20 pointer-events-none" />
 
       {/* Main Container */}
-      <div className="relative z-10 p-6 sm:p-9 lg:p-12 space-y-8">
+      <div className="relative z-10 p-5 sm:p-8 lg:p-12 space-y-6 sm:space-y-8">
         
         {/* Top Badges Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
@@ -74,7 +74,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             {onOpenEmergencies && (
               <button
                 onClick={onOpenEmergencies}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-600/90 hover:bg-red-500 text-white text-xs font-bold transition-all shadow-sm border border-red-400/30 hover:scale-105 active:scale-95 cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-600/90 hover:bg-red-500 text-white text-xs font-bold transition-all shadow-sm border border-red-400/30 hover:scale-105 active:scale-95 cursor-pointer touch-manipulation"
                 title="Líneas de emergencia de Purificación (Hospital, Bomberos, Policía)"
               >
                 <PhoneCall className="w-3.5 h-3.5 text-white" />
@@ -85,7 +85,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             {onOpenAssistant && (
               <button
                 onClick={onOpenAssistant}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-cyan-200 text-xs font-bold transition-all border border-cyan-400/30 hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-md shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-cyan-200 text-xs font-bold transition-all border border-cyan-400/30 hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-md shadow-xs touch-manipulation"
                 title="Consultas ciudadanas con IA"
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
@@ -105,7 +105,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
                 Agenda Digital &bull; Servicios Públicos &bull; Participación
               </span>
               
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-[1.15] text-white">
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-[1.18] text-white">
                 El pulso vivo de nuestra tierra,{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400">
                   en tus manos.

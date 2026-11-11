@@ -175,7 +175,7 @@ export const CitizenQuickHub: React.FC<CitizenQuickHubProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-[#111d3d] rounded-3xl border border-slate-200/90 dark:border-slate-700/80 shadow-sm hover:shadow-md transition-shadow p-6 sm:p-8 space-y-6">
+    <div className="bg-white dark:bg-[#111d3d] rounded-3xl border border-slate-200/90 dark:border-slate-700/80 shadow-sm hover:shadow-md transition-shadow p-4 sm:p-8 space-y-6">
       
       {/* Title & Section Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-100 dark:border-slate-800/80">
@@ -199,7 +199,7 @@ export const CitizenQuickHub: React.FC<CitizenQuickHubProps> = ({
         </div>
 
         {/* Modern Segmented Tab Selector */}
-        <div className="bg-slate-100 dark:bg-[#17264e] p-1.5 rounded-2xl flex flex-wrap gap-1 self-start lg:self-auto border border-slate-200/60 dark:border-slate-700/80">
+        <div className="bg-slate-100 dark:bg-[#17264e] p-1.5 rounded-2xl flex flex-wrap gap-1 self-stretch sm:self-start lg:self-auto border border-slate-200/60 dark:border-slate-700/80">
           <button
             onClick={() => setActiveSubTab('farmacias')}
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer border ${

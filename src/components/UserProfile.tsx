@@ -152,12 +152,12 @@ export const UserProfile: React.FC<UserProfileProps> = ({
       <div className="bg-gradient-to-r from-[#0D47A1] via-[#1565C0] to-[#2196F3] rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="flex items-center gap-5 relative z-10">
           <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white text-[#0D47A1] font-black text-2xl sm:text-3xl flex items-center justify-center shadow-lg border-2 border-blue-200 flex-shrink-0">
-            {currentUser.nombre_usuario.charAt(0)}
+            {((currentUser.nombre_usuario || currentUser.correo || 'U').trim().charAt(0) || 'U').toUpperCase()}
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-2xl sm:text-3xl font-black">
-                {currentUser.nombre_usuario}
+                {currentUser.nombre_usuario || currentUser.correo || 'Usuario'}
               </h2>
               <span className={`font-extrabold text-xs px-3 py-1 rounded-full capitalize border ${
                 currentUser.rol === 'administrador'

@@ -32,6 +32,7 @@ import {
 import { auth } from '../firebase';
 import { CategoryCode, UserRole, Usuario } from '../types';
 import { ApiClientAdapter } from '../adapters/apiClient';
+import { INITIAL_USERS } from '../data/initialData';
 
 interface AuthModalProps {
   onClose: () => void;
@@ -495,69 +496,74 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
         </div>
 
-        {/* Tab Navigation Controls */}
-        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 px-6 pt-3 gap-2">
+        {/* Tab Navigation Controls (Responsive on Mobile, Tablet & Desktop) */}
+        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 px-3 sm:px-6 pt-2.5 sm:pt-3 gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none select-none">
           <button
+            type="button"
             onClick={() => {
               setActiveTab('login');
               setErrorMessage(null);
               setSuccessMessage(null);
             }}
-            className={`pb-3 px-3 text-xs font-bold transition-all border-b-2 flex items-center gap-1.5 cursor-pointer ${
+            className={`pb-2.5 sm:pb-3 px-2.5 sm:px-3 text-xs font-bold transition-all border-b-2 flex items-center gap-1.5 cursor-pointer whitespace-nowrap flex-shrink-0 touch-manipulation active:scale-95 ${
               activeTab === 'login'
                 ? 'border-[#2196F3] text-[#0D47A1] dark:text-blue-400'
                 : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
-            <LogIn className="w-4 h-4" />
+            <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Iniciar Sesión</span>
           </button>
 
           <button
+            type="button"
             onClick={() => {
               setActiveTab('register');
               setErrorMessage(null);
               setSuccessMessage(null);
             }}
-            className={`pb-3 px-3 text-xs font-bold transition-all border-b-2 flex items-center gap-1.5 cursor-pointer ${
+            className={`pb-2.5 sm:pb-3 px-2.5 sm:px-3 text-xs font-bold transition-all border-b-2 flex items-center gap-1.5 cursor-pointer whitespace-nowrap flex-shrink-0 touch-manipulation active:scale-95 ${
               activeTab === 'register'
                 ? 'border-[#2196F3] text-[#0D47A1] dark:text-blue-400'
                 : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
-            <UserPlus className="w-4 h-4" />
+            <UserPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Registrarse</span>
           </button>
 
           <button
+            type="button"
             onClick={() => {
               setActiveTab('switch');
               setErrorMessage(null);
               setSuccessMessage(null);
             }}
-            className={`pb-3 px-3 text-xs font-bold transition-all border-b-2 flex items-center gap-1.5 cursor-pointer ${
+            className={`pb-2.5 sm:pb-3 px-2.5 sm:px-3 text-xs font-bold transition-all border-b-2 flex items-center gap-1.5 cursor-pointer whitespace-nowrap flex-shrink-0 touch-manipulation active:scale-95 ${
               activeTab === 'switch'
-                ? 'border-[#2196F3] text-[#0D47A1] dark:text-blue-400'
+                ? 'border-[#2196F3] text-[#0D47A1] dark:text-blue-400 font-black'
                 : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
-            <KeyRound className="w-4 h-4" />
+            <KeyRound className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500" />
             <span>Roles Demo</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
           </button>
 
           <button
+            type="button"
             onClick={() => {
               setActiveTab('forgot');
               setErrorMessage(null);
               setSuccessMessage(null);
             }}
-            className={`pb-3 px-3 text-xs font-bold transition-all border-b-2 flex items-center gap-1.5 cursor-pointer ${
+            className={`pb-2.5 sm:pb-3 px-2.5 sm:px-3 text-xs font-bold transition-all border-b-2 flex items-center gap-1.5 cursor-pointer whitespace-nowrap flex-shrink-0 touch-manipulation active:scale-95 ${
               activeTab === 'forgot'
                 ? 'border-[#2196F3] text-[#0D47A1] dark:text-blue-400'
                 : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Recuperar</span>
           </button>
         </div>
@@ -613,7 +619,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <input
                       type="email"
                       maxLength={80}
-                      placeholder="ejemplo@gmail.com"
+                      placeholder="institucional@purificacion-tolima.gov.co"
                       value={customGmail}
                       onChange={(e) => setCustomGmail(e.target.value)}
                       required
@@ -1257,72 +1263,187 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           )}
 
-          {/* TAB 4: ROLES DEMO */}
-          {activeTab === 'switch' && (
-            <div className="space-y-4">
-              <div className="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-2xl border border-blue-200 dark:border-blue-800 text-xs text-blue-800 dark:text-blue-300 flex items-center gap-2.5">
-                <Sparkles className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                <p>
-                  Cambio rápido de perfil para evaluar permisos y sincronización en tiempo real:
-                </p>
-              </div>
+          {/* TAB 4: ROLES DEMO (Cuentas institucionales simuladas sin correos reales .com) */}
+          {activeTab === 'switch' && (() => {
+            const isDemoAccount = (email?: string) => {
+              if (!email) return false;
+              const clean = email.trim().toLowerCase();
+              return !clean.endsWith('.com');
+            };
 
-              <div className="space-y-2">
-                {allUsers.map((u) => {
-                  const isCurrent = currentUser ? u.id_usuario === currentUser.id_usuario : false;
-                  return (
-                    <div
-                      key={u.id_usuario}
-                      onClick={() => {
-                        onSelectUser(u);
-                        onClose();
-                      }}
-                      className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                        isCurrent
-                          ? 'bg-blue-50 dark:bg-blue-950/60 border-[#2196F3] ring-2 ring-blue-400/30 shadow-xs'
-                          : 'bg-slate-50 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700 hover:border-blue-300'
+            const validUsers = (allUsers && allUsers.length > 0)
+              ? allUsers.filter(u => u && (u.id_usuario !== undefined || u.correo) && isDemoAccount(u.correo))
+              : [];
+            const guaranteedUsers = (validUsers.length > 0 
+              ? [...validUsers, ...INITIAL_USERS.filter(iu => !validUsers.some(u => u.rol === iu.rol || u.id_usuario === iu.id_usuario))]
+              : INITIAL_USERS
+            ).filter(u => isDemoAccount(u?.correo));
+
+            const handleQuickRole = (targetRole: UserRole) => {
+              const matched = guaranteedUsers.find(u => u?.rol === targetRole) || INITIAL_USERS.find(u => u.rol === targetRole);
+              if (matched) {
+                onSelectUser(matched);
+                onClose();
+              }
+            };
+
+            return (
+              <div className="space-y-4">
+                <div className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-slate-800/60 rounded-2xl border border-blue-200 dark:border-blue-800 text-xs text-blue-900 dark:text-blue-200 flex items-start gap-2.5 shadow-2xs">
+                  <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-black text-xs">Simulador de Permisos en Tiempo Real</p>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">
+                      Cambia instantáneamente de perfil para evaluar las funciones en tu celular, tablet o computador.
+                    </p>
+                  </div>
+                </div>
+
+                {/* 3 Botones de Selección Rápida 1-Touch */}
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                    Acceso Rápido por Rol
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleQuickRole('habitante')}
+                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 touch-manipulation active:scale-95 ${
+                        currentUser?.rol === 'habitante'
+                          ? 'bg-blue-50 dark:bg-blue-950/70 border-blue-600 ring-2 ring-blue-400/30'
+                          : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-blue-400 shadow-2xs'
                       }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-xl font-bold flex items-center justify-center text-xs text-white shadow-xs ${
-                          u.rol === 'administrador' ? 'bg-amber-600' : u.rol === 'organizador' ? 'bg-emerald-600' : 'bg-blue-600'
-                        }`}>
-                          {u.nombre_usuario.charAt(0)}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="text-xs font-black text-slate-900 dark:text-white">{u.nombre_usuario}</p>
-                            {isCurrent && (
-                              <span className="text-[9px] font-extrabold bg-blue-600 text-white px-1.5 py-0.2 rounded-full">
-                                ACTIVO
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400">{u.correo}</p>
-                          {u.barrio && (
-                            <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-                              <MapPin className="w-3 h-3 text-slate-400" />
-                              <span>{u.barrio}</span>
-                            </p>
-                          )}
-                        </div>
+                      <div className="flex items-center justify-between w-full">
+                        <span className="text-base">👤</span>
+                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300">
+                          {currentUser?.rol === 'habitante' ? 'ACTIVO' : 'HABITANTE'}
+                        </span>
                       </div>
+                      <div>
+                        <p className="text-xs font-black text-slate-900 dark:text-white">Ciudadano</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400">Reportes cívicos y eventos</p>
+                      </div>
+                    </button>
 
-                      <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-xl border ${
-                        u.rol === 'administrador'
-                          ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border-amber-300'
-                          : u.rol === 'organizador'
-                          ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border-emerald-300'
-                          : 'bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border-blue-300'
-                      }`}>
-                        {u.rol === 'administrador' ? 'Alcaldía' : u.rol === 'organizador' ? 'Organizador' : 'Habitante'}
-                      </span>
-                    </div>
-                  );
-                })}
+                    <button
+                      type="button"
+                      onClick={() => handleQuickRole('organizador')}
+                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 touch-manipulation active:scale-95 ${
+                        currentUser?.rol === 'organizador'
+                          ? 'bg-emerald-50 dark:bg-emerald-950/70 border-emerald-600 ring-2 ring-emerald-400/30'
+                          : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-emerald-400 shadow-2xs'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span className="text-base">🎪</span>
+                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300">
+                          {currentUser?.rol === 'organizador' ? 'ACTIVO' : 'ORGANIZADOR'}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-slate-900 dark:text-white">Juntas / Cultura</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400">Crear eventos y avisos</p>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleQuickRole('administrador')}
+                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 touch-manipulation active:scale-95 ${
+                        currentUser?.rol === 'administrador'
+                          ? 'bg-amber-50 dark:bg-amber-950/70 border-amber-600 ring-2 ring-amber-400/30'
+                          : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-amber-400 shadow-2xs'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span className="text-base">🏛️</span>
+                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300">
+                          {currentUser?.rol === 'administrador' ? 'ACTIVO' : 'ALCALDÍA'}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-slate-900 dark:text-white">Administrador</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400">Control territorial y auditoría</p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Lista Completa de Perfiles de Prueba */}
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                    Todos los Perfiles Demo Disponibles
+                  </p>
+                  <div className="space-y-2 max-h-[42vh] overflow-y-auto pr-1">
+                    {guaranteedUsers.map((u) => {
+                      if (!u) return null;
+                      const isCurrent = currentUser ? u.id_usuario === currentUser.id_usuario : false;
+                      const userName = String(u.nombre_usuario || u.correo?.split('@')[0] || `Usuario #${u.id_usuario || 'Demo'}`).trim();
+                      const userInitial = (userName.charAt(0) || 'U').toUpperCase();
+                      const userRole = u.rol || 'habitante';
+
+                      return (
+                        <button
+                          key={u.id_usuario || Math.random()}
+                          type="button"
+                          onClick={() => {
+                            onSelectUser(u);
+                            onClose();
+                          }}
+                          className={`w-full text-left p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 touch-manipulation active:scale-[0.99] ${
+                            isCurrent
+                              ? 'bg-blue-50 dark:bg-blue-950/60 border-[#2196F3] ring-2 ring-blue-400/30 shadow-xs'
+                              : 'bg-slate-50 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700 hover:border-blue-300 hover:bg-white dark:hover:bg-slate-800'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className={`w-9 h-9 rounded-xl font-black flex items-center justify-center text-xs text-white shadow-xs flex-shrink-0 ${
+                              userRole === 'administrador' ? 'bg-amber-600' : userRole === 'organizador' ? 'bg-emerald-600' : 'bg-blue-600'
+                            }`}>
+                              {userInitial}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="text-xs font-black text-slate-900 dark:text-white truncate">{userName}</p>
+                                {isCurrent && (
+                                  <span className="text-[9px] font-extrabold bg-blue-600 text-white px-1.5 py-0.2 rounded-full flex-shrink-0">
+                                    ACTIVO
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{u.correo || 'demo@purificacion.gov.co'}</p>
+                              {u.barrio && (
+                                <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 truncate">
+                                  <MapPin className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                                  <span className="truncate">{u.barrio}</span>
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className={`text-[10px] font-black px-2.5 py-1 rounded-xl border ${
+                              userRole === 'administrador'
+                                ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border-amber-300'
+                                : userRole === 'organizador'
+                                ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border-emerald-300'
+                                : 'bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border-blue-300'
+                            }`}>
+                              {userRole === 'administrador' ? 'Alcaldía' : userRole === 'organizador' ? 'Organizador' : 'Habitante'}
+                            </span>
+                            <span className="text-xs text-blue-600 dark:text-blue-400 font-bold hidden sm:inline">
+                              {isCurrent ? '✓' : 'Elegir'}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
         </div>
       </div>

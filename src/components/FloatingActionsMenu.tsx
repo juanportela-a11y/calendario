@@ -1,16 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, PhoneCall, MessageCircle, HelpCircle, X, ChevronUp, Sparkles, AlertCircle, Megaphone } from 'lucide-react';
+import { Bot, PhoneCall, MessageCircle, HelpCircle, X, ChevronUp, Sparkles, AlertCircle, Megaphone, Database } from 'lucide-react';
 
 interface FloatingActionsMenuProps {
   onOpenAssistant: () => void;
   onOpenEmergencies: () => void;
   onOpenReportar?: () => void;
+  onOpenDdl?: () => void;
 }
 
 export const FloatingActionsMenu: React.FC<FloatingActionsMenuProps> = ({
   onOpenAssistant,
   onOpenEmergencies,
   onOpenReportar,
+  onOpenDdl,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -40,10 +42,10 @@ export const FloatingActionsMenu: React.FC<FloatingActionsMenuProps> = ({
   }, []);
 
   return (
-    <div ref={menuRef} className="fixed bottom-6 right-6 z-40 flex flex-col items-end">
+    <div ref={menuRef} className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 flex flex-col items-end">
       {/* Expanded Menu Panel */}
       {isOpen && (
-        <div className="mb-3 w-72 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-2 animate-in fade-in slide-in-from-bottom-3 duration-200">
+        <div className="mb-3 w-72 max-w-[calc(100vw-2rem)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-2 animate-in fade-in slide-in-from-bottom-3 duration-200">
           <div className="flex items-center justify-between px-2 pb-1.5 border-b border-slate-100 dark:border-slate-800">
             <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
               <Sparkles className="w-3 h-3 text-blue-500" />
@@ -150,6 +152,32 @@ export const FloatingActionsMenu: React.FC<FloatingActionsMenuProps> = ({
               </p>
             </div>
           </a>
+
+          {/* Option 4: Base de Datos & Arquitectura Hexagonal */}
+          {onOpenDdl && (
+            <button
+              onClick={() => {
+                onOpenDdl();
+                setIsOpen(false);
+              }}
+              className="w-full text-left p-2.5 rounded-xl bg-blue-50/60 dark:bg-slate-800/60 hover:bg-blue-100/60 dark:hover:bg-slate-750 transition-all border border-blue-200/60 dark:border-blue-900/40 flex items-center gap-3 cursor-pointer group active:scale-[0.98]"
+            >
+              <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs flex-shrink-0 group-hover:scale-105 transition-transform">
+                <Database className="w-4 h-4 text-cyan-200" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-black text-slate-900 dark:text-slate-100">Base de Datos</span>
+                  <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/60">
+                    MySQL
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                  Esquema DDL & Arquitectura
+                </p>
+              </div>
+            </button>
+          )}
         </div>
       )}
 

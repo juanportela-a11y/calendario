@@ -444,7 +444,7 @@ export const INITIAL_FALLAS: ReporteFallaCiudadana[] = [
     barrio: 'El Centro',
     coordenadas: [3.8582, -74.9285],
     nombre_ciudadano: 'Julián Gómez',
-    correo_ciudadano: 'jgomez@gmail.com',
+    correo_ciudadano: 'jgomez@purificacion-tolima.gov.co',
     telefono_ciudadano: '310 987 6543',
     fecha_reporte: '2026-08-27 14:15',
     estado: 'en_reparacion',

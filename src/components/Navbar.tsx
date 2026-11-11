@@ -24,12 +24,14 @@ import {
   ChevronDown,
   ChevronRight,
   Settings,
-  Megaphone
+  Megaphone,
+  KeyRound
 } from 'lucide-react';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '../firebase';
 import { UserRole, Usuario } from '../types';
 import { useOpsStore } from '../stores/useOpsStore';
+import { INITIAL_USERS } from '../data/initialData';
 
 const GoogleIcon: React.FC<{ className?: string }> = ({ className = 'w-3.5 h-3.5' }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -70,6 +72,7 @@ interface NavbarProps {
   onOpenEmergencies?: () => void;
   onOpenServicesGuide?: () => void;
   onOpenAssistant?: () => void;
+  onOpenRolesDemo?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -89,7 +92,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleDarkMode,
   onOpenEmergencies,
   onOpenServicesGuide,
-  onOpenAssistant
+  onOpenAssistant,
+  onOpenRolesDemo
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [googleLoading, setGoogleLoading] = React.useState(false);
@@ -111,6 +115,16 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, []);
 
   const { userPoints } = useOpsStore();
+
+  const handleQuickRoleSwitch = (targetRole: UserRole) => {
+    const list = ((allUsers && allUsers.length > 0) ? allUsers : INITIAL_USERS)
+      .filter(u => !String(u?.correo || '').trim().toLowerCase().endsWith('.com'));
+    const match = list.find(u => u.rol === targetRole) || INITIAL_USERS.find(u => u.rol === targetRole);
+    if (match) {
+      setCurrentUser(match);
+      localStorage.setItem('purifi_active_user', JSON.stringify(match));
+    }
+  };
 
   const handleGoogleQuickSignIn = async () => {
     setGoogleLoading(true);
@@ -194,25 +208,25 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="sticky top-0 z-40 w-full bg-white/95 dark:bg-[#0b1329]/95 shadow-sm border-b border-blue-100 dark:border-blue-900/40 backdrop-blur-md transition-colors">
       {/* Barra de Navegación Principal Unificada */}
-      <div className="w-full max-w-[1600px] mx-auto px-2 sm:px-4 lg:px-6">
-        <div className="flex items-center justify-between h-16 gap-2 lg:gap-3 min-w-0">
+      <div className="w-full max-w-[1600px] mx-auto px-1.5 sm:px-4 lg:px-6">
+        <div className="flex items-center justify-between h-14 sm:h-16 gap-1 sm:gap-2 lg:gap-3 min-w-0">
           
           {/* Brand Logo & Indicador 24/7 en Tiempo Real */}
-          <div className="flex items-center gap-2.5 flex-shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 min-w-0">
             <div 
-              className="flex items-center gap-2 cursor-pointer group" 
+              className="flex items-center gap-1.5 sm:gap-2 cursor-pointer group" 
               onClick={() => setActiveTab('inicio')}
               title="Ir al inicio de PurifiCalendario"
             >
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0D47A1] to-[#2196F3] flex items-center justify-center text-white font-black text-lg shadow-sm border border-blue-300 dark:border-blue-500/30 flex-shrink-0 group-hover:scale-105 transition-transform">
+              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-[#0D47A1] to-[#2196F3] flex items-center justify-center text-white font-black text-sm sm:text-lg shadow-sm border border-blue-300 dark:border-blue-500/30 flex-shrink-0 group-hover:scale-105 transition-transform">
                 P
               </div>
-              <div>
-                <div className="flex items-center gap-1 leading-tight">
-                  <span className="text-lg font-black tracking-tight text-[#0D47A1] dark:text-blue-400">Purifi</span>
-                  <span className="text-lg font-extrabold text-[#2196F3] dark:text-blue-300">Calendario</span>
+              <div className="min-w-0">
+                <div className="flex items-center gap-0.5 sm:gap-1 leading-tight">
+                  <span className="text-sm sm:text-base lg:text-lg font-black tracking-tight text-[#0D47A1] dark:text-blue-400">Purifi</span>
+                  <span className="text-sm sm:text-base lg:text-lg font-extrabold text-[#2196F3] dark:text-blue-300">Calendario</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-none">
+                <div className="hidden sm:flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-none">
                   <MapPin className="w-2.5 h-2.5 text-[#2196F3] flex-shrink-0" />
                   <span className="truncate">Purificación, Tolima</span>
                 </div>
@@ -221,20 +235,20 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Indicador de Estado en Tiempo Real (24/7) */}
             <div 
-              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black border transition-all shadow-2xs ${
+              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black border transition-all shadow-2xs flex-shrink-0 ${
                 isOnline
                   ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30'
                   : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30'
               }`}
               title={isOnline ? 'Plataforma en línea 24/7 • Conexión activa en tiempo real' : 'Modo offline • Guardando cambios de forma local'}
             >
-              <span className="relative flex h-2 w-2">
+              <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
                 {isOnline && (
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 )}
-                <span className={`relative inline-flex rounded-full h-2 w-2 ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                <span className={`relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'}`} />
               </span>
-              <span className="hidden sm:inline tracking-tight">{isOnline ? 'En línea' : 'Modo offline'}</span>
+              <span className="hidden md:inline tracking-tight">{isOnline ? 'En línea' : 'Modo offline'}</span>
             </div>
           </div>
 
@@ -357,75 +371,71 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Acciones de Usuario, Puntos y Controles Integrados */}
             <div className="flex items-center gap-1.5 xl:gap-2 flex-shrink-0">
-              {/* Acceso a Base de Datos */}
-              <button
-                type="button"
-                onClick={onOpenDdl}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-blue-200/80 dark:border-blue-800/60 bg-blue-50/70 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-xs font-bold transition-all cursor-pointer whitespace-nowrap shadow-2xs"
-                title="Ver Esquema MySQL y Arquitectura Hexagonal"
-              >
-                <Database className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                <span className="hidden xl:inline">Base de Datos</span>
-                <span className="xl:hidden">BD</span>
-              </button>
-
-              {/* PurifiPuntos Cívicos */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('operaciones')}
-                className={`flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-xl border transition-all cursor-pointer text-xs font-black shadow-2xs whitespace-nowrap ${
-                  activeTab === 'operaciones'
-                    ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
-                    : 'bg-amber-50/90 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 hover:border-amber-300'
-                }`}
-                title="PurifiPuntos Cívicos y Recompensas Ciudadanas"
-              >
-                <Trophy className={`w-3.5 h-3.5 ${activeTab === 'operaciones' ? 'text-white' : 'text-amber-500'}`} />
-                <span>{currentUser ? `${userPoints} PTS` : 'Puntos'}</span>
-              </button>
-
-              {/* Botón Prominente Modo Día / Noche */}
-              <button
-                type="button"
-                onClick={onToggleDarkMode}
-                className={`flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-xl border transition-all duration-300 cursor-pointer shadow-2xs text-xs font-black select-none whitespace-nowrap ${
-                  darkMode
-                    ? 'bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-indigo-500/40 text-cyan-200 shadow-[0_0_12px_rgba(56,189,248,0.25)] hover:border-cyan-400'
-                    : 'bg-gradient-to-r from-amber-50 to-orange-50/80 border-amber-200 text-amber-900 hover:border-amber-300 hover:shadow-xs'
-                }`}
-                title={darkMode ? 'Modo Noche activo • Clic para Modo Día' : 'Modo Día activo • Clic para Modo Noche'}
-              >
-                <div
-                  className={`w-4 h-4 rounded-md flex items-center justify-center transition-all ${
-                    darkMode
-                      ? 'bg-gradient-to-tr from-indigo-600 to-cyan-500 text-white'
-                      : 'bg-gradient-to-tr from-amber-400 to-orange-400 text-white'
+              {/* Menú Unificado de Controles Ciudadanos (Puntos, Modo Noche, Notificaciones) */}
+              <div className="flex items-center rounded-xl p-0.5 bg-white/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 shadow-2xs">
+                {/* 1. PurifiPuntos Cívicos */}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('operaciones')}
+                  className={`flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer text-xs font-black whitespace-nowrap ${
+                    activeTab === 'operaciones'
+                      ? 'bg-amber-500 text-white shadow-2xs'
+                      : 'text-amber-800 dark:text-amber-300 hover:bg-amber-100/70 dark:hover:bg-amber-950/50'
                   }`}
+                  title="PurifiPuntos Cívicos y Recompensas Ciudadanas"
                 >
-                  {darkMode ? <Moon className="w-2.5 h-2.5 fill-indigo-200 text-white" /> : <Sun className="w-2.5 h-2.5 text-white" />}
-                </div>
-                <span>{darkMode ? 'Noche' : 'Día'}</span>
-              </button>
+                  <Trophy className={`w-3.5 h-3.5 ${activeTab === 'operaciones' ? 'text-white' : 'text-amber-500'}`} />
+                  <span>{currentUser ? `${userPoints} PTS` : 'Puntos'}</span>
+                </button>
 
-              {/* Notificaciones Cívicas */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('notificaciones')}
-                className={`relative p-2 rounded-xl border transition-all cursor-pointer shadow-2xs ${
-                  activeTab === 'notificaciones'
-                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                    : 'border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:border-blue-300 dark:hover:border-blue-700 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-slate-700'
-                }`}
-                title="Notificaciones cívicas"
-                aria-label="Ver notificaciones"
-              >
-                <Bell className="w-3.5 h-3.5" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full ring-2 ring-white dark:ring-slate-900 animate-pulse">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
+                <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700 mx-0.5 flex-shrink-0" />
+
+                {/* 2. Botón Modo Día / Noche */}
+                <button
+                  type="button"
+                  onClick={onToggleDarkMode}
+                  className={`flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg transition-all duration-200 cursor-pointer text-xs font-black select-none whitespace-nowrap ${
+                    darkMode
+                      ? 'text-cyan-200 hover:bg-indigo-950/60'
+                      : 'text-amber-900 hover:bg-amber-100/70'
+                  }`}
+                  title={darkMode ? 'Modo Noche activo • Clic para Modo Día' : 'Modo Día activo • Clic para Modo Noche'}
+                >
+                  <div
+                    className={`w-4 h-4 rounded-md flex items-center justify-center transition-all ${
+                      darkMode
+                        ? 'bg-gradient-to-tr from-indigo-600 to-cyan-500 text-white shadow-2xs'
+                        : 'bg-gradient-to-tr from-amber-400 to-orange-400 text-white shadow-2xs'
+                    }`}
+                  >
+                    {darkMode ? <Moon className="w-2.5 h-2.5 fill-indigo-200 text-white" /> : <Sun className="w-2.5 h-2.5 text-white" />}
+                  </div>
+                  <span>{darkMode ? 'Noche' : 'Día'}</span>
+                </button>
+
+                <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700 mx-0.5 flex-shrink-0" />
+
+                {/* 3. Notificaciones Cívicas */}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('notificaciones')}
+                  className={`relative flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer text-xs font-bold ${
+                    activeTab === 'notificaciones'
+                      ? 'bg-blue-600 text-white shadow-2xs'
+                      : 'text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-700/60'
+                  }`}
+                  title="Notificaciones cívicas"
+                  aria-label="Ver notificaciones"
+                >
+                  <Bell className="w-3.5 h-3.5" />
+                  <span className="hidden xl:inline text-xs font-bold">Avisos</span>
+                  {unreadCount > 0 && (
+                    <span className="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full ring-1 ring-white dark:ring-slate-900 animate-pulse">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+              </div>
 
               {/* Perfil de Usuario o Autenticación */}
               {currentUser ? (
@@ -440,11 +450,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                     title={`Ver Mi Perfil (${currentUser.nombre_usuario}) - Clic para ver perfil y ajustes`}
                   >
                     <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-500 text-white font-black flex items-center justify-center text-[11px] shadow-2xs flex-shrink-0">
-                      {currentUser.nombre_usuario.charAt(0).toUpperCase()}
+                      {((currentUser.nombre_usuario || currentUser.correo || 'U').trim().charAt(0) || 'U').toUpperCase()}
                     </div>
                     <div className="max-w-[75px] xl:max-w-[100px]">
                       <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block truncate leading-tight">
-                        {currentUser.nombre_usuario}
+                        {currentUser.nombre_usuario || currentUser.correo || 'Usuario'}
                       </span>
                       <div className="mt-0.5">
                         {getRoleBadge(currentUser.rol)}
@@ -494,86 +504,203 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </nav>
 
-          {/* Mobile / Tablet Menu Button & Quick Actions */}
-          <div className="lg:hidden flex items-center gap-1.5 flex-shrink-0">
-            {/* Quick Google Login on Mobile if not logged in */}
-            {!currentUser && (
+          {/* Mobile / Tablet Unified Menu & Quick Actions */}
+          <div className="lg:hidden flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+            {/* Menú Unificado Móvil: Puntos Cívicos, Modo Noche y Notificaciones */}
+            <div className="flex items-center rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/90 dark:border-blue-900/60 p-0.5 shadow-2xs flex-shrink-0">
+              {/* Puntos Cívicos */}
+              <div 
+                className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 flex items-center gap-1 text-[10px] sm:text-[11px] font-black border border-amber-200/60 dark:border-amber-700/60"
+                title={`Tus PurifiPuntos: ${userPoints}`}
+              >
+                <Trophy className="w-3 h-3 text-amber-500" />
+                <span>{userPoints}</span>
+              </div>
+
+              {/* Modo Noche / Día */}
+              <button
+                type="button"
+                onClick={onToggleDarkMode}
+                className="p-1 sm:p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer touch-manipulation"
+                title={darkMode ? 'Cambiar a modo diurno' : 'Cambiar a modo nocturno'}
+              >
+                {darkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-indigo-600" />}
+              </button>
+
+              {/* Notificaciones */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('notificaciones')}
+                className={`relative p-1 sm:p-1.5 rounded-lg transition-colors cursor-pointer touch-manipulation ${
+                  activeTab === 'notificaciones' 
+                    ? 'bg-blue-600 text-white shadow-xs' 
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+                }`}
+                title="Notificaciones"
+              >
+                <Bell className="w-3.5 h-3.5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-3.5 h-3.5 flex items-center justify-center rounded-full">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {/* Auth / Avatar or Quick Google Button */}
+            {currentUser ? (
+              <button
+                type="button"
+                onClick={() => setActiveTab('perfil')}
+                className="w-7 h-7 rounded-xl bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow-xs border border-blue-400/40 flex-shrink-0 touch-manipulation"
+                title={`Mi Perfil (${currentUser.nombre_usuario})`}
+              >
+                {((currentUser.nombre_usuario || currentUser.correo || 'U').trim().charAt(0) || 'U').toUpperCase()}
+              </button>
+            ) : (
               <button
                 type="button"
                 onClick={handleGoogleQuickSignIn}
                 disabled={googleLoading}
-                className="px-2 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center gap-1 shadow-2xs cursor-pointer active:scale-95 disabled:opacity-50"
-                title="Acceder con Google"
+                className="p-1 sm:p-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-2xs cursor-pointer active:scale-95 disabled:opacity-50 touch-manipulation flex-shrink-0"
+                title="Acceso rápido con Google"
               >
                 <GoogleIcon className="w-3.5 h-3.5" />
-                <span className="text-[11px]">Google</span>
               </button>
             )}
 
-            {/* Quick Notif Bell on Mobile */}
-            <button
-              onClick={() => setActiveTab('notificaciones')}
-              className={`relative p-2 rounded-xl border transition-all ${
-                activeTab === 'notificaciones'
-                  ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-300 text-blue-600 dark:text-blue-400'
-                  : 'border-slate-200/80 dark:border-slate-700/80 text-slate-600 dark:text-slate-300'
-              }`}
-              title="Notificaciones"
-            >
-              <Bell className="w-4 h-4" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
-
-            {/* Quick Points on Mobile */}
-            <div className="px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300 flex items-center gap-1 text-xs font-black">
-              <Trophy className="w-3 h-3 text-amber-500" />
-              <span>{userPoints}</span>
-            </div>
-
-            {/* Dark Mode on Mobile */}
-            <button
-              onClick={onToggleDarkMode}
-              className={`p-2 rounded-xl border transition-all cursor-pointer ${
-                darkMode
-                  ? 'bg-slate-800 text-cyan-300 border-indigo-500/40 shadow-xs'
-                  : 'bg-amber-50 text-amber-700 border-amber-200 shadow-xs'
-              }`}
-              title={darkMode ? 'Cambiar a modo claro (Día)' : 'Cambiar a modo oscuro (Noche)'}
-            >
-              {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-700" />}
-            </button>
-
             {/* Hamburger Toggle */}
             <button
+              type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="p-1 sm:p-1.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 touch-manipulation border border-slate-200 dark:border-slate-700 flex-shrink-0"
               aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
             >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu Drawer (Active for mobile and tablet < 1024px) */}
+      {/* Barra de Pestañas Móvil & Tablet (Grid de 5 columnas para que se alcance a presenciar todo en celular sin desbordarse) */}
+      <nav className="lg:hidden w-full border-t border-slate-200/80 dark:border-blue-900/40 bg-slate-50/95 dark:bg-[#0b1329]/95 backdrop-blur-md px-1 sm:px-3 py-1 sm:py-1.5 shadow-2xs">
+        <div className="grid grid-cols-5 gap-0.5 sm:gap-1.5 w-full max-w-xl mx-auto">
+          {/* 1. Inicio */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('inicio')}
+            className={`w-full py-1.5 px-0.5 sm:px-2 rounded-xl text-center transition-all flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 cursor-pointer touch-manipulation ${
+              activeTab === 'inicio'
+                ? 'bg-blue-600 text-white shadow-xs font-black'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 font-medium'
+            }`}
+            title="Inicio"
+          >
+            <Sparkles className="w-4 h-4 flex-shrink-0 text-amber-400" />
+            <span className="text-[10px] sm:text-xs tracking-tight truncate">Inicio</span>
+          </button>
+
+          {/* 2. Reportar Falla */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('reportar')}
+            className={`w-full py-1.5 px-0.5 sm:px-2 rounded-xl text-center transition-all flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 cursor-pointer touch-manipulation relative ${
+              activeTab === 'reportar' || activeTab === 'reportar-falla'
+                ? 'bg-blue-600 text-white shadow-xs font-black'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 font-medium'
+            }`}
+            title="Reportar Falla (+30 Puntos)"
+          >
+            <div className="relative">
+              <Megaphone className="w-4 h-4 flex-shrink-0 text-amber-500" />
+              <span className="absolute -top-1 -right-1.5 w-2 h-2 rounded-full bg-amber-400 sm:hidden" />
+            </div>
+            <span className="text-[10px] sm:text-xs tracking-tight truncate">Reportar</span>
+            <span className={`hidden sm:inline text-[9px] font-black px-1 rounded ${
+              activeTab === 'reportar' || activeTab === 'reportar-falla'
+                ? 'bg-amber-400 text-blue-950'
+                : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300/40'
+            }`}>
+              +30
+            </span>
+          </button>
+
+          {/* 3. Operaciones */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('operaciones')}
+            className={`w-full py-1.5 px-0.5 sm:px-2 rounded-xl text-center transition-all flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 cursor-pointer touch-manipulation ${
+              activeTab === 'operaciones'
+                ? 'bg-blue-600 text-white shadow-xs font-black'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 font-medium'
+            }`}
+            title="Operaciones y Vías"
+          >
+            <Activity className="w-4 h-4 flex-shrink-0 text-emerald-500" />
+            <span className="text-[10px] sm:text-xs tracking-tight truncate">Operac.</span>
+          </button>
+
+          {/* 4. Calendario */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('calendario')}
+            className={`w-full py-1.5 px-0.5 sm:px-2 rounded-xl text-center transition-all flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 cursor-pointer touch-manipulation ${
+              activeTab === 'calendario'
+                ? 'bg-blue-600 text-white shadow-xs font-black'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 font-medium'
+            }`}
+            title="Calendario Municipal"
+          >
+            <Calendar className="w-4 h-4 flex-shrink-0 text-sky-400" />
+            <span className="text-[10px] sm:text-xs tracking-tight truncate">Agenda</span>
+          </button>
+
+          {/* 5. Avisos */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('avisos')}
+            className={`w-full py-1.5 px-0.5 sm:px-2 rounded-xl text-center transition-all flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 cursor-pointer touch-manipulation relative ${
+              activeTab === 'avisos'
+                ? 'bg-blue-600 text-white shadow-xs font-black'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 font-medium'
+            }`}
+            title="Avisos Oficiales"
+          >
+            <div className="relative">
+              <ShieldAlert className="w-4 h-4 flex-shrink-0 text-rose-500" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-3.5 h-3.5 flex items-center justify-center rounded-full sm:hidden">
+                  {unreadCount}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] sm:text-xs tracking-tight truncate">Avisos</span>
+            {unreadCount > 0 && (
+              <span className="hidden sm:inline bg-red-500 text-white text-[9px] font-black px-1.5 rounded-full">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+        </div>
+      </nav>
+
+      {/* Mobile & Tablet Menu Drawer (Active for screens < 1024px) */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 pt-2 pb-4 space-y-1 shadow-lg">
+        <div className="lg:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 sm:px-6 pt-2.5 pb-4 space-y-2 shadow-lg max-h-[calc(100dvh-4.25rem)] overflow-y-auto overscroll-contain animate-in fade-in slide-in-from-top-2 duration-150">
           {currentUser ? (
-            <div className="p-3 bg-blue-50 dark:bg-slate-800/80 rounded-xl mb-2 flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="font-bold text-sm text-slate-900 dark:text-white">{currentUser.nombre_usuario}</p>
+            <div className="p-3 bg-blue-50 dark:bg-slate-800/80 rounded-2xl mb-2 flex items-center justify-between border border-blue-100 dark:border-slate-700">
+              <div className="min-w-0 pr-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-bold text-sm text-slate-900 dark:text-white truncate">{currentUser.nombre_usuario}</p>
                   <span className="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-amber-300">
                     🏆 {userPoints} PTS
                   </span>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400">{currentUser.correo}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 truncate">{currentUser.correo}</p>
               </div>
-              {getRoleBadge(currentUser.rol)}
+              <div className="flex-shrink-0">
+                {getRoleBadge(currentUser.rol)}
+              </div>
             </div>
           ) : (
             <div className="p-3 bg-blue-50 dark:bg-slate-800/80 rounded-2xl mb-2 space-y-2 border border-blue-100 dark:border-slate-700">
@@ -586,7 +713,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   setMobileMenuOpen(false);
                 }}
                 disabled={googleLoading}
-                className="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-650 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-600 font-bold text-xs shadow-2xs flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
+                className="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-650 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-600 font-bold text-xs shadow-2xs flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50 touch-manipulation"
               >
                 <GoogleIcon className="w-4 h-4" />
                 <span>Continuar con Google</span>
@@ -599,7 +726,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     else onOpenAuth();
                     setMobileMenuOpen(false);
                   }}
-                  className="w-full py-2 rounded-xl bg-blue-600 text-white font-bold text-xs text-center shadow-xs"
+                  className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs text-center shadow-xs touch-manipulation"
                 >
                   Iniciar Sesión
                 </button>
@@ -609,7 +736,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     else onOpenAuth();
                     setMobileMenuOpen(false);
                   }}
-                  className="w-full py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs text-center shadow-xs"
+                  className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs text-center shadow-xs touch-manipulation"
                 >
                   Registrarse
                 </button>
@@ -617,85 +744,144 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           )}
 
-          {mobileNavItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => {
-                setActiveTab(item.id);
-                setMobileMenuOpen(false);
-              }}
-              className={`w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium flex items-center justify-between ${
-                activeTab === item.id 
-                  ? 'bg-blue-600 text-white font-bold shadow-xs' 
-                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <item.icon className="w-4 h-4" />
-                <span>{item.label}</span>
-              </div>
-              {item.badge !== undefined && item.badge > 0 && (
-                <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
-                  {item.badge}
-                </span>
-              )}
-            </button>
-          ))}
+          {/* Selector de Roles Demo Rápido para Celular y Tablet */}
+          <div className="p-2.5 sm:p-3 rounded-2xl bg-gradient-to-r from-blue-50/90 to-indigo-50/90 dark:from-slate-800/90 dark:to-indigo-950/40 border border-blue-200/80 dark:border-blue-900/50 mb-2 shadow-2xs">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] font-black uppercase tracking-wider text-blue-900 dark:text-blue-300 flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                Roles Demo (Móvil & Tablet)
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onOpenRolesDemo) onOpenRolesDemo();
+                  else onOpenAuth();
+                  setMobileMenuOpen(false);
+                }}
+                className="text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer touch-manipulation"
+              >
+                Ver todos &bull;
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-1.5">
+              <button
+                type="button"
+                onClick={() => handleQuickRoleSwitch('habitante')}
+                className={`py-2 px-1.5 rounded-xl text-center text-[11px] sm:text-xs font-black transition-all cursor-pointer border touch-manipulation active:scale-95 ${
+                  currentUser?.rol === 'habitante'
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                    : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400'
+                }`}
+              >
+                👤 Habitante
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickRoleSwitch('organizador')}
+                className={`py-2 px-1.5 rounded-xl text-center text-[11px] sm:text-xs font-black transition-all cursor-pointer border touch-manipulation active:scale-95 ${
+                  currentUser?.rol === 'organizador'
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                    : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-emerald-400'
+                }`}
+              >
+                🎪 Organizador
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickRoleSwitch('administrador')}
+                className={`py-2 px-1.5 rounded-xl text-center text-[11px] sm:text-xs font-black transition-all cursor-pointer border touch-manipulation active:scale-95 ${
+                  currentUser?.rol === 'administrador'
+                    ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                    : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-amber-400'
+                }`}
+              >
+                🏛️ Admin
+              </button>
+            </div>
+          </div>
 
-          {currentUser?.rol === 'organizador' && (
-            <button
-              onClick={() => {
-                setActiveTab('panel-organizador');
-                setMobileMenuOpen(false);
-              }}
-              className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-bold bg-emerald-600 text-white flex items-center gap-2 shadow-xs"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>Panel de Organizador</span>
-            </button>
-          )}
+          {/* Grid de Navegación Adaptable (1 col en móvil, 2 cols en tablet) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2">
+            {mobileNavItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full text-left px-3.5 py-2.5 min-h-[44px] rounded-xl text-sm font-medium flex items-center justify-between transition-colors touch-manipulation ${
+                  activeTab === item.id 
+                    ? 'bg-blue-600 text-white font-bold shadow-xs' 
+                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <item.icon className="w-4 h-4" />
+                  <span>{item.label}</span>
+                </div>
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            ))}
 
-          {currentUser?.rol === 'administrador' && (
-            <button
-              onClick={() => {
-                setActiveTab('panel-admin');
-                setMobileMenuOpen(false);
-              }}
-              className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-bold bg-[#0D47A1] text-white flex items-center gap-2 shadow-xs"
-            >
-              <ShieldAlert className="w-4 h-4" />
-              <span>Panel de Administración</span>
-            </button>
-          )}
+            {currentUser?.rol === 'organizador' && (
+              <button
+                onClick={() => {
+                  setActiveTab('panel-organizador');
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full text-left px-3.5 py-2.5 min-h-[44px] rounded-xl text-sm font-bold bg-emerald-600 text-white flex items-center gap-2 shadow-xs touch-manipulation sm:col-span-2"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>Panel de Organizador</span>
+              </button>
+            )}
 
-          {onOpenAssistant && (
-            <button
-              onClick={() => {
-                onOpenAssistant();
-                setMobileMenuOpen(false);
-              }}
-              className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-slate-800/80 text-blue-700 dark:text-blue-300 flex items-center justify-between border border-blue-200/80 dark:border-blue-900/60 shadow-2xs"
-            >
-              <div className="flex items-center gap-2.5">
-                <Bot className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                <span>Asistente Virtual PurifiGuía</span>
-              </div>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            </button>
-          )}
+            {currentUser?.rol === 'administrador' && (
+              <button
+                onClick={() => {
+                  setActiveTab('panel-admin');
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full text-left px-3.5 py-2.5 min-h-[44px] rounded-xl text-sm font-bold bg-[#0D47A1] text-white flex items-center gap-2 shadow-xs touch-manipulation sm:col-span-2"
+              >
+                <ShieldAlert className="w-4 h-4" />
+                <span>Panel de Administración</span>
+              </button>
+            )}
 
-          {onOpenServicesGuide && (
-            <button
-              onClick={() => {
-                onOpenServicesGuide();
-                setMobileMenuOpen(false);
-              }}
-              className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-800 dark:text-slate-200 flex items-center gap-2 border border-slate-200 dark:border-slate-700"
-            >
-              <Truck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              <span>Rutas de Aseo & Trámites</span>
-            </button>
-          )}
+            {onOpenAssistant && (
+              <button
+                onClick={() => {
+                  onOpenAssistant();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full text-left px-3.5 py-2.5 min-h-[44px] rounded-xl text-sm font-bold bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-slate-800/80 text-blue-700 dark:text-blue-300 flex items-center justify-between border border-blue-200/80 dark:border-blue-900/60 shadow-2xs touch-manipulation"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Bot className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <span>Asistente Virtual PurifiGuía</span>
+                </div>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              </button>
+            )}
+
+            {onOpenServicesGuide && (
+              <button
+                onClick={() => {
+                  onOpenServicesGuide();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full text-left px-3.5 py-2.5 min-h-[44px] rounded-xl text-sm font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-800 dark:text-slate-200 flex items-center gap-2 border border-slate-200 dark:border-slate-700 touch-manipulation"
+              >
+                <Truck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <span>Rutas de Aseo & Trámites</span>
+              </button>
+            )}
+          </div>
 
           {/* Mobile Dark Mode Toggle */}
           <button
