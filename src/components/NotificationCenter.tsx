@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { Evento, Notificacion } from '../types';
 import { getEventDateDetails } from '../utils/savedEventNotificationService';
+import { playSettingsSound } from '../utils/soundUtils';
 
 interface NotificationCenterProps {
   notifications: Notificacion[];
@@ -69,6 +70,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
     if (!notificationService) return;
     const granted = await notificationService.requestPermission();
     if (granted) {
+      playSettingsSound();
       setTestNotificationFeedback('¡Permiso concedido! Las alertas de eventos guardados están activadas.');
     } else {
       setTestNotificationFeedback('No se pudo activar el permiso. Revisa la configuración de notificaciones de tu navegador.');
@@ -77,6 +79,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   };
 
   const handleRunTest = (evento?: Evento) => {
+    playSettingsSound();
     const targetEvent: Evento = evento || (savedEvents.length > 0 ? savedEvents[0] : {
       id_evento: 9999,
       nombre: 'Festival Folclórico y Cultural del Río Magdalena',

@@ -56,11 +56,10 @@ export const HomeCitizenPollWidget: React.FC<HomeCitizenPollWidgetProps> = ({
     localStorage.setItem(`purifica_poll_choice_${activeEncuesta.id_encuesta}`, String(idOpcion));
 
     await voteEncuesta(activeEncuesta.id_encuesta, idOpcion, userId);
-    addUserPoints(25, 'Voto en Consulta Ciudadana Municipal');
-    showToast('¡Voto registrado en Firestore! Has ganado +25 PurifiPuntos');
+    showToast('¡Voto registrado en tiempo real!');
 
     if (onVoteSuccess) {
-      onVoteSuccess(25);
+      onVoteSuccess(0);
     }
   };
 
@@ -92,7 +91,7 @@ export const HomeCitizenPollWidget: React.FC<HomeCitizenPollWidgetProps> = ({
                 {activeEncuesta.titulo}
               </h3>
               <p className="text-xs text-blue-100 mt-1 max-w-2xl leading-relaxed">
-                {activeEncuesta.descripcion || 'Tu voto ciudadano ayuda a la Administración Municipal a priorizar proyectos de inversión comunitaria.'} Recibe <strong className="text-amber-300">+25 PurifiPuntos</strong> con cada voto.
+                {activeEncuesta.descripcion || 'Tu voto ciudadano ayuda a la Administración Municipal a priorizar proyectos de inversión comunitaria.'}
               </p>
             </div>
 
@@ -191,10 +190,6 @@ export const HomeCitizenPollWidget: React.FC<HomeCitizenPollWidgetProps> = ({
                           <Vote className="w-3.5 h-3.5" />
                           <span>Votar por esta opción</span>
                         </button>
-                        <span className="text-[10px] text-cyan-200 font-semibold flex items-center gap-1">
-                          <Award className="w-3 h-3 text-amber-400" />
-                          <span>+25 Puntos Cívicos</span>
-                        </span>
                       </div>
                     )}
 

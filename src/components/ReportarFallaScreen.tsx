@@ -605,12 +605,6 @@ export const ReportarFallaScreen: React.FC<ReportarFallaScreenProps> = ({
                 </>
               )}
             </button>
-
-            {/* Badge de Recompensa Cívica */}
-            <div className="flex items-center justify-center gap-2 text-center text-[11px] text-slate-500 dark:text-slate-400">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Ganas <strong>+30 PurifiPuntos</strong> cívicos por cada reporte radicado</span>
-            </div>
           </form>
         </div>
       )}
@@ -726,8 +720,8 @@ export const ReportarFallaScreen: React.FC<ReportarFallaScreenProps> = ({
                     {/* Footer del card */}
                     <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-100 dark:border-slate-800/80">
                       <span>{reporte.fecha_reporte}</span>
-                      <span className="font-bold text-amber-600 dark:text-amber-400">
-                        +{reporte.puntos_ganados || 30} PTS Cívicos
+                      <span className="font-semibold text-slate-500 dark:text-slate-400">
+                        Radicado #{reporte.id_falla}
                       </span>
                     </div>
                   </div>
@@ -743,8 +737,8 @@ export const ReportarFallaScreen: React.FC<ReportarFallaScreenProps> = ({
         <div className="space-y-4 animate-fade-in">
           <HomeCitizenPollWidget
             currentUser={currentUser}
-            onVoteSuccess={(points) => {
-              showToast(`✓ ¡Has ganado +${points} PurifiPuntos por tu voto ciudadano!`);
+            onVoteSuccess={() => {
+              showToast('✓ ¡Voto ciudadano registrado!');
             }}
           />
 
@@ -754,7 +748,7 @@ export const ReportarFallaScreen: React.FC<ReportarFallaScreenProps> = ({
               <span>Transparencia & Presupuesto Comunitario</span>
             </h4>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Las consultas ciudadanas de Purificación permiten a los habitantes definir prioridades en obras de infraestructura, vías terciarias, redes de agua y parques recreativos. Cada voto genera puntos acumulables para beneficios en trámites cívicos.
+              Las consultas ciudadanas de Purificación permiten a los habitantes definir prioridades en obras de infraestructura, vías terciarias, redes de agua y parques recreativos, fortaleciendo la participación activa de la comunidad.
             </p>
           </div>
         </div>

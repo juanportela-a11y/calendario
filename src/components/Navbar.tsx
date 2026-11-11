@@ -25,13 +25,15 @@ import {
   ChevronRight,
   Settings,
   Megaphone,
-  KeyRound
+  KeyRound,
+  Palette
 } from 'lucide-react';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '../firebase';
 import { UserRole, Usuario } from '../types';
 import { useOpsStore } from '../stores/useOpsStore';
 import { INITIAL_USERS } from '../data/initialData';
+import { ColorPalette } from '../utils/themePalettes';
 
 const GoogleIcon: React.FC<{ className?: string }> = ({ className = 'w-3.5 h-3.5' }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -73,6 +75,8 @@ interface NavbarProps {
   onOpenServicesGuide?: () => void;
   onOpenAssistant?: () => void;
   onOpenRolesDemo?: () => void;
+  currentPalette?: ColorPalette;
+  onOpenPaletteModal?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -93,7 +97,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenEmergencies,
   onOpenServicesGuide,
   onOpenAssistant,
-  onOpenRolesDemo
+  onOpenRolesDemo,
+  currentPalette,
+  onOpenPaletteModal
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [googleLoading, setGoogleLoading] = React.useState(false);
@@ -277,7 +283,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     ? 'bg-blue-600 text-white shadow-xs border border-blue-600'
                     : 'bg-blue-50/80 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200/60 dark:border-blue-800/60'
                 }`}
-                title="Reportar fallas de agua, alumbrado, basuras o vías (+30 PTS)"
+                title="Reportar fallas de agua, alumbrado, basuras o vías"
               >
                 <Megaphone className={`w-3.5 h-3.5 ${activeTab === 'reportar' || activeTab === 'reportar-falla' ? 'text-white' : 'text-blue-600 dark:text-blue-400'}`} />
                 <span>Reportar Falla</span>
@@ -369,28 +375,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Separador vertical sutil entre pestañas y controles */}
             <div className="w-px h-6 bg-slate-300/80 dark:bg-slate-700/80 mx-1 flex-shrink-0" />
 
-            {/* Acciones de Usuario, Puntos y Controles Integrados */}
-            <div className="flex items-center gap-1.5 xl:gap-2 flex-shrink-0">
-              {/* Menú Unificado de Controles Ciudadanos (Puntos, Modo Noche, Notificaciones) */}
+            {/* Acciones de Usuario y Controles Integrados */}
+            <div className="flex items-center gap-1.5 xl:gap-2 min-w-0">
+              {/* Menú Unificado de Controles Ciudadanos (Modo Noche, Notificaciones) */}
               <div className="flex items-center rounded-xl p-0.5 bg-white/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 shadow-2xs">
-                {/* 1. PurifiPuntos Cívicos */}
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('operaciones')}
-                  className={`flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg transition-all cursor-pointer text-xs font-black whitespace-nowrap ${
-                    activeTab === 'operaciones'
-                      ? 'bg-amber-500 text-white shadow-2xs'
-                      : 'text-amber-800 dark:text-amber-300 hover:bg-amber-100/70 dark:hover:bg-amber-950/50'
-                  }`}
-                  title="PurifiPuntos Cívicos y Recompensas Ciudadanas"
-                >
-                  <Trophy className={`w-3.5 h-3.5 ${activeTab === 'operaciones' ? 'text-white' : 'text-amber-500'}`} />
-                  <span>{currentUser ? `${userPoints} PTS` : 'Puntos'}</span>
-                </button>
-
-                <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700 mx-0.5 flex-shrink-0" />
-
-                {/* 2. Botón Modo Día / Noche */}
+                {/* 1. Botón Modo Día / Noche */}
                 <button
                   type="button"
                   onClick={onToggleDarkMode}
@@ -414,6 +403,29 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </button>
 
                 <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700 mx-0.5 flex-shrink-0" />
+
+                {/* 2. Paleta de Colores */}
+                {onOpenPaletteModal && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={onOpenPaletteModal}
+                      className="flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg transition-all duration-200 cursor-pointer text-xs font-bold select-none whitespace-nowrap text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-700/60"
+                      title={`Cambiar paleta de colores de toda la página • Actual: ${currentPalette?.name || 'Clásico'}`}
+                      aria-label="Cambiar paleta de colores"
+                    >
+                      <div 
+                        className="w-4 h-4 rounded-md flex items-center justify-center text-white shadow-2xs transition-colors"
+                        style={{ backgroundColor: currentPalette?.primary || 'var(--theme-primary, #0284c7)' }}
+                      >
+                        <Palette className="w-2.5 h-2.5 text-white" />
+                      </div>
+                      <span className="hidden xl:inline text-xs font-bold">Color</span>
+                    </button>
+
+                    <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700 mx-0.5 flex-shrink-0" />
+                  </>
+                )}
 
                 {/* 3. Notificaciones Cívicas */}
                 <button
@@ -506,17 +518,8 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Mobile / Tablet Unified Menu & Quick Actions */}
           <div className="lg:hidden flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
-            {/* Menú Unificado Móvil: Puntos Cívicos, Modo Noche y Notificaciones */}
+            {/* Menú Unificado Móvil: Modo Noche y Notificaciones */}
             <div className="flex items-center rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/90 dark:border-blue-900/60 p-0.5 shadow-2xs flex-shrink-0">
-              {/* Puntos Cívicos */}
-              <div 
-                className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 flex items-center gap-1 text-[10px] sm:text-[11px] font-black border border-amber-200/60 dark:border-amber-700/60"
-                title={`Tus PurifiPuntos: ${userPoints}`}
-              >
-                <Trophy className="w-3 h-3 text-amber-500" />
-                <span>{userPoints}</span>
-              </div>
-
               {/* Modo Noche / Día */}
               <button
                 type="button"
@@ -526,6 +529,24 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 {darkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-indigo-600" />}
               </button>
+
+              {/* Selector de Paleta de Colores Móvil */}
+              {onOpenPaletteModal && (
+                <button
+                  type="button"
+                  onClick={onOpenPaletteModal}
+                  className="p-1 sm:p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer touch-manipulation"
+                  title={`Cambiar colores de la página • Actual: ${currentPalette?.name || 'Clásico'}`}
+                  aria-label="Cambiar paleta de colores"
+                >
+                  <div 
+                    className="w-3.5 h-3.5 rounded-md flex items-center justify-center text-white shadow-2xs transition-colors"
+                    style={{ backgroundColor: currentPalette?.primary || 'var(--theme-primary, #0284c7)' }}
+                  >
+                    <Palette className="w-2.5 h-2.5 text-white" />
+                  </div>
+                </button>
+              )}
 
               {/* Notificaciones */}
               <button
@@ -609,20 +630,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                 ? 'bg-blue-600 text-white shadow-xs font-black'
                 : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 font-medium'
             }`}
-            title="Reportar Falla (+30 Puntos)"
+            title="Reportar Falla"
           >
             <div className="relative">
               <Megaphone className="w-4 h-4 flex-shrink-0 text-amber-500" />
-              <span className="absolute -top-1 -right-1.5 w-2 h-2 rounded-full bg-amber-400 sm:hidden" />
             </div>
             <span className="text-[10px] sm:text-xs tracking-tight truncate">Reportar</span>
-            <span className={`hidden sm:inline text-[9px] font-black px-1 rounded ${
-              activeTab === 'reportar' || activeTab === 'reportar-falla'
-                ? 'bg-amber-400 text-blue-950'
-                : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300/40'
-            }`}>
-              +30
-            </span>
           </button>
 
           {/* 3. Operaciones */}
@@ -692,9 +705,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="min-w-0 pr-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="font-bold text-sm text-slate-900 dark:text-white truncate">{currentUser.nombre_usuario}</p>
-                  <span className="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-amber-300">
-                    🏆 {userPoints} PTS
-                  </span>
                 </div>
                 <p className="text-xs text-slate-600 dark:text-slate-400 truncate">{currentUser.correo}</p>
               </div>
@@ -912,6 +922,34 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             </div>
           </button>
+
+          {/* Selector de Paleta de Colores en Cajón Móvil */}
+          {onOpenPaletteModal && (
+            <button
+              onClick={() => {
+                onOpenPaletteModal();
+                setMobileMenuOpen(false);
+              }}
+              type="button"
+              className="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-2xs cursor-pointer touch-manipulation"
+            >
+              <div className="flex items-center gap-2.5">
+                <div 
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-white shadow-2xs"
+                  style={{ backgroundColor: currentPalette?.primary || 'var(--theme-primary, #0284c7)' }}
+                >
+                  <Palette className="w-3.5 h-3.5 text-white" />
+                </div>
+                <div>
+                  <span className="block font-black text-slate-900 dark:text-white">Paleta de Colores de la Página</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">
+                    {currentPalette?.name || 'Cambiar colores de toda la web'}
+                  </span>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+            </button>
+          )}
 
           <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
             {currentUser ? (

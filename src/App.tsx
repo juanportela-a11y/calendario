@@ -56,6 +56,8 @@ import { FloatingActionsMenu } from './components/FloatingActionsMenu';
 import { CalendarSkeleton, DashboardCardSkeleton } from './components/common/SkeletonLoaders';
 import { ConfirmDeleteModal, DeleteTargetInfo } from './components/common/ConfirmDeleteModal';
 import { useOpsStore } from './stores/useOpsStore';
+import { ColorPalette, getSavedPalette, applyPaletteToDOM } from './utils/themePalettes';
+import { ColorPaletteModal } from './components/common/ColorPaletteModal';
 
 // Dynamic Lazy Loading & Code Splitting for Heavy Modules
 const CalendarView = lazy(() => import('./components/CalendarView').then(m => ({ default: m.CalendarView })));
@@ -110,6 +112,14 @@ export default function App() {
     localStorage.setItem('purificheck_dark_manual', 'true');
     setDarkMode(prev => !prev);
   };
+
+  // Color Palette State & Synchronous DOM Injection
+  const [currentPalette, setCurrentPalette] = useState<ColorPalette>(() => getSavedPalette().palette);
+  const [showPaletteModal, setShowPaletteModal] = useState<boolean>(false);
+
+  useEffect(() => {
+    applyPaletteToDOM(currentPalette);
+  }, [currentPalette]);
   
   // Data State
   const [categories, setCategories] = useState<Categoria[]>([]);
@@ -440,7 +450,7 @@ export default function App() {
     let orgId = 1;
     if (currentUser) {
       const myOrg = organizers.find(o => o.id_usuario === currentUser.id_usuario);
-      if (myOrg) orgId = myOrg.id_organizador;
+       if (myOrg) orgId = myOrg.id_organizador;
     }
 
     const created = await ApiClientAdapter.createEvent({ ...dto, id_organizador: orgId });
@@ -750,6 +760,8 @@ export default function App() {
         onOpenServicesGuide={() => setShowServicesGuideModal(true)}
         onOpenAssistant={() => setShowAssistantModal(true)}
         onOpenRolesDemo={() => openAuthWithTab('switch')}
+        currentPalette={currentPalette}
+        onOpenPaletteModal={() => setShowPaletteModal(true)}
       />
 
       {/* Main Container */}
@@ -1136,6 +1148,9 @@ export default function App() {
               onSelectEvent={(e) => setSelectedEvent(e)}
               onOpenAuth={() => openAuthWithTab('switch')}
               onLogout={handleLogoutUser}
+              currentPalette={currentPalette}
+              onOpenPaletteModal={() => setShowPaletteModal(true)}
+              onSelectPalette={setCurrentPalette}
             />
           </Suspense>
         )}
@@ -1322,6 +1337,14 @@ export default function App() {
         target={deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleExecuteConfirmDelete}
+      />
+
+      {/* Global Interactive Color Palette Modal */}
+      <ColorPaletteModal
+        isOpen={showPaletteModal}
+        onClose={() => setShowPaletteModal(false)}
+        currentPalette={currentPalette}
+        onSelectPalette={(newPalette) => setCurrentPalette(newPalette)}
       />
     </div>
   );

@@ -272,7 +272,7 @@ export const INITIAL_NOTIFICATIONS: Notificacion[] = [
     id_notificacion: 1,
     id_usuario: 1,
     titulo: 'Bienvenido a PurifiCalendario',
-    mensaje: 'Has iniciado sesión como Habitante de Purificación. Puedes guardar tus eventos favoritos, reportar incidentes viales y acumular PurifiPuntos.',
+    mensaje: 'Has iniciado sesión como Habitante de Purificación. Puedes guardar tus eventos favoritos, reportar incidentes viales y consultar avisos oficiales.',
     fecha: 'Hoy',
     leida: false,
     tipo_ref: 'sistema',

@@ -1382,7 +1382,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     <th className="p-4">Correo</th>
                     <th className="p-4">Ubicación / Barrio</th>
                     <th className="p-4">Teléfono</th>
-                    <th className="p-4">Puntos Cívicos</th>
+                    <th className="p-4">Estado</th>
                     <th className="p-4">Rol en el Sistema</th>
                     <th className="p-4">Fecha Registro</th>
                   </tr>
@@ -1421,9 +1421,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           </div>
                         </td>
                         <td className="p-4">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 font-bold text-[11px] border border-amber-200 dark:border-amber-800">
-                            <Award className="w-3.5 h-3.5 text-amber-500" />
-                            <span>{user.puntos_civicos || 50} pts</span>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-bold text-[11px] border border-emerald-200 dark:border-emerald-800">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span>Activo</span>
                           </span>
                         </td>
                         <td className="p-4">

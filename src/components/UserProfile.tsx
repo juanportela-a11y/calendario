@@ -19,11 +19,14 @@ import {
   BarChart3,
   Bell,
   Clock,
-  Award
+  Award,
+  Palette
 } from 'lucide-react';
 import { Categoria, Evento, Usuario } from '../types';
 import { EventCard } from './EventCard';
 import { useOpsStore } from '../stores/useOpsStore';
+import { playSettingsSound } from '../utils/soundUtils';
+import { ColorPalette, PRESET_PALETTES, applyPaletteToDOM } from '../utils/themePalettes';
 
 interface UserProfileProps {
   currentUser: Usuario | null;
@@ -34,6 +37,9 @@ interface UserProfileProps {
   onSelectEvent: (evento: Evento) => void;
   onOpenAuth?: () => void;
   onLogout?: () => void;
+  currentPalette?: ColorPalette;
+  onOpenPaletteModal?: () => void;
+  onSelectPalette?: (palette: ColorPalette) => void;
 }
 
 export const UserProfile: React.FC<UserProfileProps> = ({
@@ -44,7 +50,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   onToggleSave,
   onSelectEvent,
   onOpenAuth,
-  onLogout
+  onLogout,
+  currentPalette,
+  onOpenPaletteModal,
+  onSelectPalette
 }) => {
   const [profileTab, setProfileTab] = useState<'guardados' | 'preferencias' | 'historial_civico' | 'seguridad'>('guardados');
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
@@ -80,7 +89,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
               Portal y Perfil Ciudadano
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
-              Inicia sesión o regístrate en PurifiCalendario para guardar tus eventos, recibir alertas por barrio y ganar PurifiPuntos cívicos.
+              Inicia sesión o regístrate en PurifiCalendario para guardar tus eventos, recibir alertas por barrio y participar en las actividades comunitarias.
             </p>
           </div>
 
@@ -118,10 +127,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                 <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                 <span>Guardado de eventos y recordatorios</span>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                <span>Acumulación de PurifiPuntos</span>
-              </div>
             </div>
           </div>
         </div>
@@ -138,6 +143,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   };
 
   const handleSavePreferences = () => {
+    playSettingsSound();
     onUpdatePreferences(selectedCategories);
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 2500);
@@ -197,18 +203,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
         {/* Action Controls in Header */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 relative z-10 w-full md:w-auto">
-          {/* PurifiPuntos pill */}
-          <div className="bg-white/15 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/30 flex items-center justify-between sm:justify-start gap-2 shadow-xs">
-            <Trophy className="w-5 h-5 text-amber-300 animate-bounce" />
-            <div>
-              <div className="flex items-center gap-1.5">
-                <p className="text-[10px] text-blue-200 font-bold uppercase">PurifiPuntos Cívicos</p>
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400" title="Sincronizado con base central de Firestore" />
-              </div>
-              <p className="text-sm font-black text-white">{userPoints} PTS</p>
-            </div>
-          </div>
-
           <div className="flex items-center gap-2">
             {onOpenAuth && (
               <button
@@ -270,7 +264,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
           }`}
         >
           <Award className="w-4 h-4 text-emerald-500" />
-          <span>Historial Cívico & Puntos</span>
+          <span>Historial Cívico & Reportes</span>
         </button>
       </div>
 
@@ -378,6 +372,68 @@ export const UserProfile: React.FC<UserProfileProps> = ({
               );
             })}
           </div>
+
+          {/* SECCIÓN: PALETA DE COLORES DE LA PLATAFORMA */}
+          <div className="pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h4 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <Palette className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <span>Paleta de Colores de la Plataforma</span>
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Personaliza todos los acentos, botones y gradientes de la web a tu estilo.
+                </p>
+              </div>
+
+              {onOpenPaletteModal && (
+                <button
+                  type="button"
+                  onClick={onOpenPaletteModal}
+                  className="px-4 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/80 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer self-start sm:self-auto"
+                >
+                  <Palette className="w-3.5 h-3.5" />
+                  <span>Abrir Selector Completo</span>
+                </button>
+              )}
+            </div>
+
+            {/* Quick Palette Swatches */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              {PRESET_PALETTES.map((pal) => {
+                const isActive = currentPalette?.id === pal.id;
+                return (
+                  <button
+                    key={pal.id}
+                    type="button"
+                    onClick={() => {
+                      playSettingsSound();
+                      applyPaletteToDOM(pal);
+                      if (onSelectPalette) onSelectPalette(pal);
+                    }}
+                    className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-2.5 ${
+                      isActive
+                        ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/50 ring-2 ring-blue-500/20 shadow-xs'
+                        : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 bg-slate-50/50 dark:bg-slate-800/40'
+                    }`}
+                  >
+                    <div 
+                      className="w-6 h-6 rounded-lg flex-shrink-0 shadow-2xs border border-white/50"
+                      style={{
+                        background: `linear-gradient(135deg, ${pal.gradientFrom}, ${pal.gradientTo})`
+                      }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-black text-slate-900 dark:text-white truncate leading-tight">
+                        {pal.name.split(' (')[0]}
+                      </p>
+                    </div>
+                    {isActive && <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 stroke-[3]" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 
@@ -385,17 +441,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({
       {profileTab === 'historial_civico' && (
         <div className="space-y-6">
           
-          {/* Puntos & Medallas Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-5 rounded-3xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-md space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase text-amber-100">PurifiPuntos</span>
-                <Trophy className="w-5 h-5 text-amber-200" />
-              </div>
-              <p className="text-3xl font-black">{userPoints}</p>
-              <p className="text-[11px] text-amber-100">Nivel: Ciudadano Activo de Purificación</p>
-            </div>
-
+          {/* Estadísticas de Participación Cívica */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase text-slate-400">Reportes Viales</span>
@@ -424,7 +471,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
             {myFallas.length === 0 ? (
               <p className="text-xs text-slate-400 py-4 text-center">
-                No tienes reportes de fallas radicados en el sistema. Puedes radicar uno desde el menú flotante o Centro Rápido Ciudadano para ganar +30 PurifiPuntos.
+                No tienes reportes de fallas radicados en el sistema. Puedes radicar uno desde el Centro Rápido Ciudadano para pronta atención municipal.
               </p>
             ) : (
               <div className="space-y-3">
@@ -482,7 +529,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                       <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-500 dark:text-slate-400">
                         <span>📍 {f.barrio} ({f.ubicacion})</span>
                         <span>📅 Radicado: {f.fecha_reporte}</span>
-                        <span className="text-amber-600 dark:text-amber-400 font-bold">⭐ +{f.puntos_ganados || 30} Puntos Cívicos</span>
+                        <span className="text-blue-600 dark:text-blue-400 font-semibold">Radicado #{f.id_falla}</span>
                       </div>
 
                       {f.respuesta_oficial && (

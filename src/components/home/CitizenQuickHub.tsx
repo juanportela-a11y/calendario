@@ -616,7 +616,7 @@ export const CitizenQuickHub: React.FC<CitizenQuickHubProps> = ({
                 ¿Problemas con agua potable, fluido eléctrico, basuras o vías en tu barrio?
               </h4>
               <p className="text-xs text-blue-100 mt-0.5">
-                Radica tu reporte con foto y ubicación GPS. Las cuadrillas de Purificación lo atenderán directamente y recibes +30 PurifiPuntos.
+                Radica tu reporte con foto y ubicación GPS. Las cuadrillas de Purificación lo atenderán directamente para pronta solución.
               </p>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { Aviso, CorteProgramado, JornadaSaludEsterilizacion, ReporteVia } from '../types';
+import { playSettingsSound } from './soundUtils';
 
 export interface PushNotificationSubscription {
   endpoint: string;
@@ -34,6 +35,7 @@ export async function requestPushNotificationPermission(): Promise<boolean> {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
       if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
+        playSettingsSound();
         const registration = await navigator.serviceWorker.ready;
         registration.showNotification('PurifiCalendario Conectado', {
           body: 'Has activado las alertas y recordatorios de eventos municipales de Purificación.',
@@ -41,6 +43,7 @@ export async function requestPushNotificationPermission(): Promise<boolean> {
           badge: '/icon-192.svg'
         });
       } else {
+        playSettingsSound();
         new Notification('PurifiCalendario Conectado', {
           body: 'Has activado las alertas y recordatorios de eventos municipales de Purificación.',
           icon: '/icon-192.svg'
@@ -56,6 +59,9 @@ export async function requestPushNotificationPermission(): Promise<boolean> {
 }
 
 export function triggerLocalPush(titulo: string, cuerpo: string, tag?: string, data?: any): void {
+  // Reproducir el sonido idéntico al de ajustes para notificaciones cívicas
+  playSettingsSound();
+
   if (!('Notification' in window)) return;
   
   if (Notification.permission === 'granted') {

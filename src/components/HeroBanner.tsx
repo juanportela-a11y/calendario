@@ -141,9 +141,6 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
                 >
                   <Megaphone className="w-4 h-4 text-slate-950 shrink-0" />
                   <span>Reportar Falla</span>
-                  <span className="text-[10px] font-black uppercase bg-slate-950 text-amber-300 px-1.5 py-0.5 rounded-md">
-                    +30 Pts
-                  </span>
                 </button>
               )}
             </div>

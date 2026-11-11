@@ -95,10 +95,10 @@ export const UrgentAlertBanner: React.FC<UrgentAlertBannerProps> = ({
             <button
               onClick={handleConfirm}
               className="px-3.5 py-2 rounded-xl bg-white hover:bg-emerald-50 text-emerald-800 hover:text-emerald-900 font-black text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-1.5 hover:scale-105 active:scale-95 cursor-pointer"
-              title="Confirmar que leíste este aviso municipal y ganar PurifiPuntos"
+              title="Confirmar lectura de este aviso municipal"
             >
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>Enterado (+15 PTS)</span>
+              <span>Enterado</span>
             </button>
           ) : (
             <span className="px-3 py-2 rounded-xl bg-emerald-700/90 text-white font-extrabold text-xs flex items-center gap-1.5 border border-emerald-400/40">

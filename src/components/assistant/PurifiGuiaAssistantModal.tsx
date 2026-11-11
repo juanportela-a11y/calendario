@@ -80,7 +80,7 @@ export const PurifiGuiaAssistantModal: React.FC<PurifiGuiaAssistantModalProps> =
     {
       id: 'welcome',
       sender: 'bot',
-      text: '¡Hola! Soy **PurifiGuía**, tu asistente cívico e interactivo de Purificación, Tolima. 🌴\n\nPuedes interactuar conmigo por voz o texto, usar herramientas interactivas integradas, consultar cortes de servicios públicos en vivo, monitorear el Río Magdalena, buscar farmacias de turno o participar en trivias cívicas para ganar PurifiPuntos.',
+      text: '¡Hola! Soy **PurifiGuía**, tu asistente cívico e interactivo de Purificación, Tolima. 🌴\n\nPuedes interactuar conmigo por voz o texto, usar herramientas interactivas integradas, consultar cortes de servicios públicos en vivo, monitorear el Río Magdalena, buscar farmacias de turno o participar en trivias cívicas de nuestra cultura.',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       quickReplies: [
         '💧 Cortes de agua y luz hoy',
@@ -90,7 +90,7 @@ export const PurifiGuiaAssistantModal: React.FC<PurifiGuiaAssistantModalProps> =
         '🍲 Platos típicos y Viudo de Capaz',
         '🚧 Vías cerradas y daños',
         '🌊 Nivel del Río Magdalena',
-        '🎯 Trivia Cívica (+15 Pts)',
+        '🎯 Trivia Cívica',
         '🚨 Teléfonos de emergencia 24h'
       ]
     }
@@ -222,7 +222,7 @@ export const PurifiGuiaAssistantModal: React.FC<PurifiGuiaAssistantModalProps> =
           '🌴 ¿Qué hacer en Purificación?',
           '🍲 Platos típicos y Viudo de Capaz',
           '🚧 Vías cerradas y daños',
-          '🎯 Trivia Cívica (+15 Pts)'
+          '🎯 Trivia y Cultura Cívica'
         ]
       }
     ]);
@@ -259,7 +259,7 @@ export const PurifiGuiaAssistantModal: React.FC<PurifiGuiaAssistantModalProps> =
       return {
         id: Date.now().toString(),
         sender: 'bot',
-        text: '🎯 **¡Desafío Cívico de Purificación!**\nResponde correctamente para ganar **+15 PurifiPuntos** cívicos:',
+        text: '🎯 **¡Desafío Cívico de Purificación!**\nDemuestra tus conocimientos sobre la Villa de las Palmas:',
         timestamp: time,
         interactiveWidget: 'civic_quiz',
         quizData: {
@@ -459,7 +459,7 @@ export const PurifiGuiaAssistantModal: React.FC<PurifiGuiaAssistantModalProps> =
         '🍲 Platos típicos y Viudo de Capaz',
         '🚧 Vías cerradas y daños',
         '🌊 Nivel del Río Magdalena',
-        '🎯 Trivia Cívica (+15 Pts)',
+        '🎯 Trivia y Cultura Cívica',
         '🚨 Teléfonos de emergencia'
       ]
     };
@@ -586,11 +586,11 @@ export const PurifiGuiaAssistantModal: React.FC<PurifiGuiaAssistantModalProps> =
         className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-2xl w-full h-[90vh] max-h-[740px] overflow-hidden flex flex-col relative"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Bonus Points Notification Toast */}
+        {/* Correct Answer Notification Toast */}
         {bonusPointsToast !== null && (
           <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 bg-emerald-500 text-white font-black text-xs px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-bounce border-2 border-white">
             <Award className="w-4 h-4" />
-            <span>¡+{bonusPointsToast} PurifiPuntos Cívicos Ganados!</span>
+            <span>¡Excelente! Respuesta Correcta</span>
           </div>
         )}
 
@@ -690,7 +690,7 @@ export const PurifiGuiaAssistantModal: React.FC<PurifiGuiaAssistantModalProps> =
           </button>
 
           <button
-            onClick={() => handleSend('🎯 Trivia Cívica (+15 Pts)')}
+            onClick={() => handleSend('🎯 Trivia y Cultura Cívica')}
             className="px-3 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 text-xs font-black border border-amber-300 dark:border-amber-700 hover:border-amber-500 whitespace-nowrap flex items-center gap-1 cursor-pointer transition-all shadow-2xs"
           >
             <Flame className="w-3.5 h-3.5 text-amber-500" />
@@ -929,15 +929,15 @@ export const PurifiGuiaAssistantModal: React.FC<PurifiGuiaAssistantModalProps> =
                           <button
                             onClick={() => handleRateMessage(msg.id)}
                             className="hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center gap-0.5 cursor-pointer font-semibold"
-                            title="Respuesta útil (+5 PurifiPuntos)"
+                            title="Respuesta útil"
                           >
                             <ThumbsUp className="w-3 h-3" />
-                            <span>Útil (+5 PTS)</span>
+                            <span>Útil</span>
                           </button>
                         ) : (
                           <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-0.5">
-                            <Award className="w-3 h-3" />
-                            <span>+5 PTS</span>
+                            <CheckCircle2 className="w-3 h-3" />
+                            <span>¡Gracias!</span>
                           </span>
                         )}
                       </div>

@@ -154,7 +154,6 @@ export const useOpsStore = create<OpsState>((set, get) => ({
     const current = get().userPoints;
     const newPoints = current + pts;
     set({ userPoints: newPoints });
-    get().showToast(`🏆 +${pts} PTS cívicos ganados: ${motivo}`);
 
     // Resolver ID de usuario objetivo
     let targetUid = userId;
@@ -1015,9 +1014,7 @@ export const useOpsStore = create<OpsState>((set, get) => ({
     }));
     await saveAuditLogToFirestore(log);
 
-    // Reward citizen points
-    addUserPoints(30, `Reporte ciudadano de falla (${data.tipo.toUpperCase()})`);
-    showToast(`✓ ¡Reporte #${newId} radicado exitosamente! Has ganado 30 PurifiPuntos.`);
+    showToast(`✓ ¡Reporte #${newId} radicado exitosamente.`);
 
     return newReporte;
   },
